@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>TermBridge</title>
+  <!-- Self-hosted local assets (Zero external CDN dependency) -->
+  <link rel="stylesheet" href="/vendor/xterm.css">
+  <script src="/vendor/xterm.js"></script>
+  <script src="/vendor/addon-fit.js"></script>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --card-bg: #15191f;
+      --card-border: #252a31;
+      --card-border-hover: #3b434e;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #2f81f7;
+      --accent-hover: #388bfd;
+      --green: #238636;
+      --green-dot: #3fb950;
+      --yellow-dot: #d29922;
+      --red-dot: #f85149;
+      --btn-bg: #21262d;
+      --btn-active: #30363d;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      height: 48px;
+      min-height: 48px;
+      background: #0f1217;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      z-index: 10;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-icon {
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 2px 8px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--yellow-dot);
+    }
+    .status-dot.connected { background: var(--green-dot); }
+    .status-dot.disconnected { background: var(--red-dot); }
+    .status-dot.connecting { background: var(--yellow-dot); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn {
+      background: var(--btn-bg);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn:active { background: var(--btn-active); }
+    .btn-primary {
+      background: var(--green);
+      border-color: rgba(240, 246, 252, 0.1);
+      color: #fff;
+    }
+    .btn-primary:active { background: #2ea043; }
+
+    /* On-Screen Diagnostic Bar */
+    #debug-bar {
+      background: #12161d;
+      color: #58a6ff;
+      font-size: 11px;
+      padding: 3px 10px;
+      font-family: Consolas, monospace;
+      border-bottom: 1px solid #21262d;
+      overflow-x: auto;
+      white-space: nowrap;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    /* Main Container Views */
+    #view-terminals {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    #view-terminal {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* Terminal List Screen */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .terminal-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .terminal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .terminal-card:active {
+      background: #1c2128;
+      border-color: var(--accent);
+    }
+    .terminal-card.active-session {
+      border-color: var(--accent);
+      background: #121824;
+    }
+    .terminal-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .terminal-card-title {
+      font-weight: 600;
+      font-size: 15px;
+      color: #fff;
+    }
+    .terminal-card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+    .terminal-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--green-dot);
+      font-weight: 500;
+    }
+    .terminal-card-meta .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green-dot);
+    }
+
+    /* Active Terminal View */
+    .terminal-subbar {
+      height: 36px;
+      min-height: 36px;
+      background: #12151b;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      font-size: 13px;
+    }
+    .current-session-label {
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .current-session-label:hover { color: var(--accent); }
+    #terminal-container {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      position: relative;
+      background: #000;
+      padding: 4px;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .xterm {
+      width: 100%;
+      height: 100%;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .xterm-viewport {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Mobile Keyboard Accessory Toolbar */
+    .mobile-toolbar {
+      background: #12151b;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mobile-toolbar::-webkit-scrollbar { display: none; }
+    .tool-key {
+      background: #21262d;
+      color: var(--text);
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: monospace;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      min-width: 40px;
+      text-align: center;
+    }
+    .tool-key:active { background: #388bfd; color: #fff; }
+    .tool-key.active-ctrl {
+      background: #1f6feb;
+      border-color: #58a6ff;
+      color: #fff;
+    }
+
+    /* Paste / Prompt Input Footer */
+    .terminal-footer {
+      display: flex;
+      gap: 8px;
+      padding: 6px 8px;
+      padding-bottom: calc(6px + var(--safe-bottom));
+      background: #0f1217;
+      border-top: 1px solid var(--card-border);
+    }
+    .input-box {
+      flex: 1;
+      min-width: 0;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #fff;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-family: monospace;
+      outline: none;
+    }
+    .input-box:focus { border-color: var(--accent); }
+
+    /* Auth Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .modal-title { font-size: 17px; font-weight: 700; color: #fff; }
+    .modal-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <div class="brand">
+      <span class="brand-icon">⚡</span> TermBridge
+    </div>
+    <div class="status-badge">
+      <span id="status-dot" class="status-dot"></span>
+      <span id="status-text">Connecting</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button id="btn-toggle-view" class="btn" style="display:none;">Terminals</button>
+    <button id="btn-new-term" class="btn btn-primary">+ Terminal</button>
+  </div>
+</header>
+
+<!-- Diagnostic Status Strip -->
+<div id="debug-bar">[INIT] Starting application...</div>
+
+<!-- View 1: Terminals List -->
+<div id="view-terminals">
+  <div class="section-title">TERMINALS</div>
+  <div id="terminals-list" class="terminal-cards">
+    <!-- Rendered dynamically -->
+  </div>
+</div>
+
+<!-- View 2: Active Terminal Screen -->
+<div id="view-terminal">
+  <div class="terminal-subbar">
+    <div id="current-term-name" class="current-session-label">
+      <span>PowerShell</span> <small style="color:var(--text-muted)">◀ Switch</small>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button id="btn-reconnect" class="btn" style="padding:3px 8px; font-size:11px;">Reconnect</button>
+    </div>
+  </div>
+
+  <div id="terminal-container"></div>
+
+  <!-- Mobile Touch Key Helper Bar -->
+  <div class="mobile-toolbar">
+    <button class="tool-key" id="key-esc">ESC</button>
+    <button class="tool-key" id="key-tab">TAB</button>
+    <button class="tool-key" id="key-ctrl">CTRL</button>
+    <button class="tool-key" id="key-ctrl-c" style="color:#f85149;">^C</button>
+    <button class="tool-key" id="key-copy">COPY</button>
+    <button class="tool-key" id="key-up">▲</button>
+    <button class="tool-key" id="key-down">▼</button>
+    <button class="tool-key" id="key-left">◀</button>
+    <button class="tool-key" id="key-right">▶</button>
+  </div>
+
+  <!-- Paste / Text Command Footer -->
+  <div class="terminal-footer">
+    <input id="prompt-input" class="input-box" placeholder="Type or paste command…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    <button id="btn-send-prompt" class="btn btn-primary">Send</button>
+  </div>
+</div>
+
+<!-- Authentication Modal -->
+<div id="auth-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Authentication Required</div>
+    <div class="modal-desc">Enter the laptop pairing access token printed on your laptop terminal.</div>
+    <input id="auth-token-input" class="input-box" type="password" placeholder="Access token" />
+    <button id="btn-submit-token" class="btn btn-primary" style="height:36px;">Authenticate</button>
+  </div>
+</div>
+
+<script>
+  window.onerror = function(msg, url, line) {
+    const b = document.getElementById('debug-bar');
+    if (b) {
+      b.style.color = '#f85149';
+      b.textContent = `[JS_ERROR] ${msg} (line ${line})`;
+    }
+    console.error('[GLOBAL_ERROR]', msg, url, line);
+  };
+
+  function logDebug(tag, detail = '') {
+    console.log(`[${tag}]`, detail);
+    const b = document.getElementById('debug-bar');
+    if (b) {
+      b.textContent = `[${tag}] ${detail}`;
+    }
+  }
+
+  const Terminal = window.Terminal;
+  const FitAddon = window.FitAddon ? window.FitAddon.FitAddon : null;
+
+  // --- Auth Token Extraction ---
+  function extractToken() {
+    // 1. From URL hash (#token=...)
+    if (location.hash && location.hash.includes('token=')) {
+      const match = location.hash.match(/token=([^&]+)/);
+      if (match) {
+        const t = decodeURIComponent(match[1]);
+        try { localStorage.setItem('termbridge-token', t); } catch {}
+        history.replaceState(null, '', location.pathname + location.search);
+        logDebug('TOKEN_PRESENT=true', `TOKEN_LENGTH=${t.length} (from hash)`);
+        return t;
+      }
+    }
+    // 2. From URL search params (?token=...)
+    const params = new URLSearchParams(location.search);
+    if (params.get('token')) {
+      const t = params.get('token');
+      try { localStorage.setItem('termbridge-token', t); } catch {}
+      logDebug('TOKEN_PRESENT=true', `TOKEN_LENGTH=${t.length} (from query)`);
+      return t;
+    }
+    // 3. From localStorage
+    let stored = '';
+    try { stored = localStorage.getItem('termbridge-token') || ''; } catch {}
+    logDebug(`TOKEN_PRESENT=${!!stored}`, `TOKEN_LENGTH=${stored.length} (from storage)`);
+    return stored;
+  }
+
+  let token = extractToken();
+  const base = `${location.protocol}//${location.host}`;
+
+  // DOM Elements
+  const viewTerminals = document.getElementById('view-terminals');
+  const viewTerminal = document.getElementById('view-terminal');
+  const terminalsList = document.getElementById('terminals-list');
+  const btnToggleView = document.getElementById('btn-toggle-view');
+  const btnNewTerm = document.getElementById('btn-new-term');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+  const currentTermName = document.getElementById('current-term-name');
+  const btnReconnect = document.getElementById('btn-reconnect');
+  const promptInput = document.getElementById('prompt-input');
+  const btnSendPrompt = document.getElementById('btn-send-prompt');
+  const authModal = document.getElementById('auth-modal');
+  const authTokenInput = document.getElementById('auth-token-input');
+  const btnSubmitToken = document.getElementById('btn-submit-token');
+
+  // Mobile Key Buttons
+  const keyEsc = document.getElementById('key-esc');
+  const keyTab = document.getElementById('key-tab');
+  const keyCtrl = document.getElementById('key-ctrl');
+  const keyCtrlC = document.getElementById('key-ctrl-c');
+  const keyCopy = document.getElementById('key-copy');
+  const keyUp = document.getElementById('key-up');
+  const keyDown = document.getElementById('key-down');
+  const keyLeft = document.getElementById('key-left');
+  const keyRight = document.getElementById('key-right');
+
+  let ctrlActive = false;
+  let currentSessionId = null;
+  let currentSessionTitle = 'Terminal';
+  let ws = null;
+  let reconnectTimer = null;
+  let reconnectAttempts = 0;
+  let activeSessions = [];
+
+  // Terminal Setup
+  let term = null;
+  let fit = null;
+
+  if (Terminal) {
+    term = new Terminal({
+      cursorBlink: true,
+      convertEol: true,
+      scrollback: 5000,
+      fontSize: 14,
+      fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+      theme: {
+        background: '#0b0d10',
+        foreground: '#e6edf3',
+        cursor: '#58a6ff',
+        selectionBackground: '#264f78'
+      }
+    });
+
+    if (FitAddon) {
+      fit = new FitAddon();
+      term.loadAddon(fit);
+    }
+    term.open(document.getElementById('terminal-container'));
+  } else {
+    logDebug('INIT_ERROR', 'Terminal bundle not loaded');
+  }
+
+  function updateStatus(state, label) {
+    statusDot.className = 'status-dot ' + state;
+    statusText.textContent = label;
+  }
+
+  // --- API Requests ---
+  async function fetchSessions() {
+    logDebug('REST_CALL', `${base}/api/sessions`);
+    const res = await fetch(`${base}/api/sessions`, {
+      headers: { 'x-auth-token': token }
+    });
+    logDebug('REST_STATUS', `HTTP ${res.status}`);
+    if (res.status === 401) {
+      logDebug('AUTH_FAIL', '401 Unauthorized. Showing token input.');
+      showAuthModal();
+      throw new Error('Unauthorized');
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    logDebug('REST_OK', `Loaded ${data.length} sessions`);
+    return data;
+  }
+
+  async function createNewSession(title) {
+    const res = await fetch(`${base}/api/sessions`, {
+      method: 'POST',
+      headers: {
+        'x-auth-token': token,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ title })
+    });
+    if (!res.ok) throw new Error('Failed to create session');
+    return res.json();
+  }
+
+  // --- Render Terminals List ---
+  function renderTerminalsView(sessions) {
+    activeSessions = sessions;
+    terminalsList.innerHTML = '';
+
+    if (sessions.length === 0) {
+      terminalsList.innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center;">No active terminals. Tap "+ Terminal" to create one.</div>';
+      return;
+    }
+
+    sessions.forEach(s => {
+      const card = document.createElement('div');
+      card.className = `terminal-card ${s.id === currentSessionId ? 'active-session' : ''}`;
+      card.innerHTML = `
+        <div class="terminal-card-info">
+          <div class="terminal-card-title">${escapeHtml(s.title || 'Terminal')}</div>
+          <div class="terminal-card-sub">${escapeHtml(s.shell || '')} ${s.pid ? `• PID ${s.pid}` : ''}</div>
+        </div>
+        <div class="terminal-card-meta">
+          <span class="dot"></span>
+          <span>Running</span>
+        </div>
+      `;
+      card.onclick = () => openSession(s.id, s.title);
+      terminalsList.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // --- View Switching ---
+  function showListView() {
+    viewTerminal.style.display = 'none';
+    viewTerminals.style.display = 'flex';
+    btnToggleView.style.display = 'none';
+    refreshSessionsList();
+  }
+
+  function showTerminalView() {
+    viewTerminals.style.display = 'none';
+    viewTerminal.style.display = 'flex';
+    btnToggleView.style.display = 'inline-flex';
+    btnToggleView.textContent = 'Terminals';
+    setTimeout(() => {
+      if (fit) fit.fit();
+      sendResize();
+      if (term) term.focus();
+    }, 50);
+  }
+
+  async function refreshSessionsList() {
+    try {
+      const list = await fetchSessions();
+      renderTerminalsView(list);
+    } catch (e) {
+      console.warn('Error refreshing sessions:', e);
+    }
+  }
+
+  function openSession(id, title) {
+    currentSessionId = id;
+    currentSessionTitle = title || 'Terminal';
+    currentTermName.querySelector('span').textContent = currentSessionTitle;
+    showTerminalView();
+    connect(id);
+  }
+
+  // --- WebSocket Live Connection ---
+  function connect(id) {
+    if (!id) return;
+    currentSessionId = id;
+    if (ws) {
+      ws.onclose = null;
+      ws.close();
+      ws = null;
+    }
+    clearTimeout(reconnectTimer);
+
+    updateStatus('connecting', 'Connecting…');
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    // Clean WebSocket URL: Token is sent via encrypted frame, NOT in query string!
+    const wsUrl = `${proto}://${location.host}/ws`;
+
+    logDebug('WS_CREATE', wsUrl);
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      logDebug('WS_OPEN', 'Sending auth payload...');
+      // Authenticate via first message inside encrypted TLS frame
+      ws.send(JSON.stringify({ type: 'auth', token, session: id }));
+      logDebug('WS_AUTH_SENT', `session=${id.slice(0, 8)}...`);
+      reconnectAttempts = 0;
+      updateStatus('connected', 'Connected');
+      if (fit) fit.fit();
+      sendResize();
+    };
+
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'ready') {
+          logDebug('WS_READY', `PID: ${msg.session?.pid || 'running'}`);
+          if (msg.session?.pid) {
+            currentTermName.querySelector('span').textContent = `${currentSessionTitle} (PID: ${msg.session.pid})`;
+          }
+        } else if (msg.type === 'history') {
+          if (term) {
+            term.reset();
+            term.write(msg.data);
+            if (fit) fit.fit();
+          }
+        } else if (msg.type === 'output') {
+          if (term) term.write(msg.data);
+        } else if (msg.type === 'exit') {
+          updateStatus('disconnected', `Exited (${msg.exitCode})`);
+          logDebug('WS_EXIT', `exitCode=${msg.exitCode}`);
+        } else if (msg.type === 'error') {
+          updateStatus('disconnected', msg.message);
+          logDebug('WS_ERROR', msg.message);
+        }
+      } catch (err) {
+        logDebug('WS_PARSE_ERR', err.message);
+      }
+    };
+
+    ws.onclose = (e) => {
+      updateStatus('disconnected', 'Disconnected');
+      logDebug('WS_CLOSE', `code=${e.code}`);
+      reconnectAttempts++;
+      const delay = Math.min(5000, 1000 * Math.pow(1.3, reconnectAttempts));
+      updateStatus('connecting', `Reconnecting (${Math.round(delay/1000)}s)…`);
+      reconnectTimer = setTimeout(() => {
+        if (currentSessionId === id && viewTerminal.style.display !== 'none') {
+          connect(id);
+        }
+      }, delay);
+    };
+
+    ws.onerror = (e) => {
+      updateStatus('disconnected', 'Error');
+      logDebug('WS_ERROR', 'WebSocket connection error');
+    };
+  }
+
+  function sendResize() {
+    if (ws && ws.readyState === WebSocket.OPEN && term) {
+      ws.send(JSON.stringify({
+        type: 'resize',
+        cols: term.cols,
+        rows: term.rows
+      }));
+    }
+  }
+
+  // --- Input & Keyboard Handlers ---
+  if (term) {
+    term.onData((data) => {
+      if (ctrlActive && data.length === 1) {
+        ctrlActive = false;
+        keyCtrl.classList.remove('active-ctrl');
+        const code = data.toUpperCase().charCodeAt(0);
+        if (code >= 64 && code <= 95) {
+          sendInput(String.fromCharCode(code - 64));
+          return;
+        }
+      }
+      sendInput(data);
+    });
+  }
+
+  function sendInput(data) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'input', data }));
+    }
+  }
+
+  // Mobile Key Bar Handlers
+  keyEsc.onclick = () => { sendInput('\x1b'); if (term) term.focus(); };
+  keyTab.onclick = () => { sendInput('\t'); if (term) term.focus(); };
+  keyCtrl.onclick = () => {
+    ctrlActive = !ctrlActive;
+    keyCtrl.classList.toggle('active-ctrl', ctrlActive);
+  };
+  keyCtrlC.onclick = () => { sendInput('\x03'); if (term) term.focus(); };
+  keyCopy.onclick = async () => {
+    if (!term) return;
+    const selection = term.getSelection();
+    if (selection) {
+      try {
+        await navigator.clipboard.writeText(selection);
+        keyCopy.textContent = 'COPIED!';
+        setTimeout(() => { keyCopy.textContent = 'COPY'; }, 1000);
+      } catch {
+        prompt('Selected text:', selection);
+      }
+    } else {
+      keyCopy.textContent = 'SELECT 1ST';
+      setTimeout(() => { keyCopy.textContent = 'COPY'; }, 1000);
+    }
+  };
+  keyUp.onclick = () => { sendInput('\x1b[A'); if (term) term.focus(); };
+  keyDown.onclick = () => { sendInput('\x1b[B'); if (term) term.focus(); };
+  keyLeft.onclick = () => { sendInput('\x1b[D'); if (term) term.focus(); };
+  keyRight.onclick = () => { sendInput('\x1b[C'); if (term) term.focus(); };
+
+  // Prompt / Paste Input Bar
+  function sendPrompt() {
+    const val = promptInput.value;
+    if (!val) return;
+    sendInput(val + '\r');
+    promptInput.value = '';
+    if (term) term.focus();
+  }
+  btnSendPrompt.onclick = sendPrompt;
+  promptInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      sendPrompt();
+    }
+  });
+
+  // Reconnect Button
+  btnReconnect.onclick = () => {
+    if (currentSessionId) connect(currentSessionId);
+  };
+
+  // Switch to list view on label click
+  currentTermName.onclick = showListView;
+  btnToggleView.onclick = () => {
+    if (viewTerminal.style.display !== 'none') {
+      showListView();
+    } else if (currentSessionId) {
+      showTerminalView();
+    }
+  };
+
+  // New Terminal
+  btnNewTerm.onclick = async () => {
+    const title = prompt('Terminal Title:', 'Terminal');
+    if (title === null) return;
+    try {
+      const session = await createNewSession(title);
+      await refreshSessionsList();
+      openSession(session.id, session.title);
+    } catch (e) {
+      alert('Could not create terminal: ' + e.message);
+    }
+  };
+
+  // --- Auth Modal Handlers ---
+  function showAuthModal() {
+    authModal.style.display = 'flex';
+    authTokenInput.focus();
+  }
+
+  btnSubmitToken.onclick = () => {
+    const val = authTokenInput.value.trim();
+    if (!val) return;
+    token = val;
+    try { localStorage.setItem('termbridge-token', token); } catch {}
+    authModal.style.display = 'none';
+    bootstrap();
+  };
+
+  // --- Viewport & Orientation Resize Adaptation ---
+  function handleResize() {
+    if (viewTerminal.style.display !== 'none') {
+      if (fit) fit.fit();
+      sendResize();
+    }
+  }
+  window.addEventListener('resize', handleResize);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleResize);
+  }
+
+  // --- Visibility Change (Phone Screen Wake) ---
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (currentSessionId && (!ws || ws.readyState !== WebSocket.OPEN)) {
+        connect(currentSessionId);
+      }
+    }
+  });
+
+  // --- Initialization Bootstrap ---
+  async function bootstrap() {
+    logDebug('BOOTSTRAP', `TOKEN_PRESENT=${!!token} TOKEN_LENGTH=${token ? token.length : 0}`);
+    if (!token) {
+      logDebug('AUTH_PROMPT', 'No token found. Showing modal...');
+      showAuthModal();
+      return;
+    }
+    try {
+      const list = await fetchSessions();
+      renderTerminalsView(list);
+      // Auto-open first terminal if available
+      if (list.length > 0) {
+        openSession(list[0].id, list[0].title);
+      } else {
+        showListView();
+      }
+    } catch (err) {
+      logDebug('BOOT_ERR', err.message);
+    }
+  }
+
+  bootstrap();
+</script>
+</body>
+</html>
