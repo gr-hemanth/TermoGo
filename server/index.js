@@ -8,6 +8,8 @@ import { WebSocketServer } from 'ws';
 import pty from 'node-pty';
 import qrcode from 'qrcode-terminal';
 import { startTunnel } from './tunnel.js';
+import xtermPkg from '@xterm/xterm';
+const { Terminal: VirtualTerminal } = xtermPkg;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -69,6 +71,254 @@ function spawnShell() {
   return { file: process.env.SHELL || '/bin/bash', args: [] };
 }
 
+export function stripAnsi(str) {
+  if (!str) return '';
+  return str
+    // 1. CSI sequences: ESC [ ... final_byte
+    .replace(/\x1b\[[0-9:;<=>?]*[ !"#$%&'()*+,-./]*[@-~]/g, '')
+    // 2. OSC sequences: ESC ] ... BEL or ESC \
+    .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    // 3. DCS / APC / PM sequences
+    .replace(/\x1b[P^_][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    // 4. SS2 / SS3 sequences
+    .replace(/\x1b[NO][ -~]/g, '')
+    // 5. 2-char ESC sequences
+    .replace(/\x1b[ %()*+-./][@-~]/g, '')
+    .replace(/\x1b[=><#][0-9A-Za-z]/g, '')
+    .replace(/\x1b[6-9c-zCEHMNOXYZ]/g, '')
+    // 6. Bare ESC
+    .replace(/\x1b+/g, '')
+    // 7. Non-printable control characters (preserve \t, \n, \r)
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
+}
+
+export function extractCleanResponseFromLines(rawLines) {
+  if (!rawLines || rawLines.length === 0) return '';
+
+  const lines = rawLines.map(l => stripAnsi(l || '').trimEnd());
+
+  // 1. Find the bottom-most non-empty line
+  let lastNonEmpty = lines.length - 1;
+  while (lastNonEmpty >= 0 && !lines[lastNonEmpty].trim()) {
+    lastNonEmpty--;
+  }
+  if (lastNonEmpty < 0) return { text: '', isAgy: false };
+
+  // 2. Locate the AGY active input box & footer at the bottom
+  // Expected structure at the bottom of an AGY terminal:
+  // [optional: model info like "Gemini ... · high"]
+  // [optional: "? for shortcuts"]
+  // [bottom border: ────────]
+  // [prompt: "> " or ">"]
+  // [top border: ────────]
+  let footerPromptBoxTop = -1;
+  let isAgySession = false;
+
+  for (let i = lastNonEmpty; i >= Math.max(0, lastNonEmpty - 8); i--) {
+    const line = lines[i].trim();
+    // Look for the active prompt line `>` or `> `
+    if (/^>\s*$/.test(line)) {
+      // Find the border directly above it
+      for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
+        if (/^[─\-_=━―—\s]{3,}$/.test(lines[j].trim())) {
+          footerPromptBoxTop = j;
+          isAgySession = true;
+          break;
+        }
+      }
+      if (footerPromptBoxTop !== -1) break;
+    }
+  }
+
+  let responseEndIndex = lastNonEmpty;
+  if (isAgySession && footerPromptBoxTop !== -1) {
+    responseEndIndex = footerPromptBoxTop - 1;
+  } else {
+    // If not detected as AGY active prompt box, check if bottom is a shell prompt
+    const lastLine = lines[lastNonEmpty].trim();
+    if (/^(PS [A-Z]:\\.*>|[a-zA-Z0-9_\-@]+[:#$\s].*[$#>])\s*$/.test(lastLine) || /^>\s*$/.test(lastLine)) {
+      responseEndIndex = lastNonEmpty - 1;
+    }
+  }
+
+  // Trim trailing empty lines
+  while (responseEndIndex >= 0 && !lines[responseEndIndex].trim()) {
+    responseEndIndex--;
+  }
+  if (responseEndIndex < 0) return { text: '', isAgy: isAgySession };
+
+  // 3. Scan upwards from responseEndIndex to locate top boundary
+  // In AGY, the top boundary is:
+  // - Tool execution cards: e.g. "● Bash(...)", "● ReadFile(...)"
+  // - Or the user's prompt box: "────────" / "> user prompt" / "────────"
+  let responseStartIndex = 0;
+  for (let i = responseEndIndex; i >= 0; i--) {
+    const line = lines[i].trim();
+
+    // Check if this line is an AGY tool call:
+    const isToolCall = /^[●•*]\s+[A-Za-z0-9_]+\s*\(.*\)/.test(line) ||
+                       /^[●•*]\s+(Bash|Read|Edit|Write|Task|Glob|Grep|Browse|Run)\b/i.test(line) ||
+                       /^\s*└─\s+(exit|status|result)/i.test(line);
+
+    if (isToolCall) {
+      responseStartIndex = i + 1;
+      break;
+    }
+
+    // Check if this line is the bottom border of a user prompt box
+    if (/^[─\-_=━―—\s]{10,}$/.test(line)) {
+      if (i > 0 && /^>\s+\S+/.test(lines[i - 1].trim())) {
+        responseStartIndex = i + 1;
+        break;
+      }
+      responseStartIndex = i + 1;
+      break;
+    }
+
+    // Check if this line is a user prompt line directly: "> some command"
+    if (/^>\s+[a-zA-Z0-9]/.test(line) && (i === 0 || /^[─\-_=━―—\s]{3,}$/.test(lines[i-1]?.trim() || ''))) {
+      responseStartIndex = i + 1;
+      break;
+    }
+  }
+
+  // Trim leading empty lines
+  while (responseStartIndex <= responseEndIndex && !lines[responseStartIndex].trim()) {
+    responseStartIndex++;
+  }
+
+  if (responseStartIndex > responseEndIndex) return { text: '', isAgy: isAgySession };
+
+  return {
+    text: lines.slice(responseStartIndex, responseEndIndex + 1).join('\n').trim(),
+    isAgy: isAgySession
+  };
+}
+
+export function extractFromTerminal(term) {
+  if (!term || !term.buffer || !term.buffer.active) return { text: '', isAgy: false };
+  const buffer = term.buffer.active;
+  const lines = [];
+
+  for (let i = 0; i < buffer.length; i++) {
+    const lineObj = buffer.getLine(i);
+    if (!lineObj) continue;
+    const str = lineObj.translateToString(true);
+    if (lineObj.isWrapped && lines.length > 0) {
+      lines[lines.length - 1] += str;
+    } else {
+      lines.push(str);
+    }
+  }
+
+  return extractCleanResponseFromLines(lines);
+}
+
+function cleanTerminalOutput(raw) {
+  return stripAnsi(raw);
+}
+
+function getHistorySlice(session, fromOffset) {
+  const effectiveOffset = Math.max(session.historyStartOffset, fromOffset);
+  const skipChars = effectiveOffset - session.historyStartOffset;
+
+  let currentPos = 0;
+  const resultChunks = [];
+
+  for (const chunk of session.history) {
+    const chunkEnd = currentPos + chunk.length;
+    if (chunkEnd <= skipChars) {
+      currentPos = chunkEnd;
+      continue;
+    }
+    if (currentPos < skipChars) {
+      const sliceStart = skipChars - currentPos;
+      resultChunks.push(chunk.slice(sliceStart));
+    } else {
+      resultChunks.push(chunk);
+    }
+    currentPos = chunkEnd;
+  }
+
+  return resultChunks.join('');
+}
+
+function getLastInteraction(session) {
+  if (!session) return { id: '', command: '', text: '' };
+
+  let cleanText = '';
+
+  // 1. If this session is running an AGY interaction, use virtual terminal TUI extractor
+  if (session.virtualTerm) {
+    const agyExtract = extractFromTerminal(session.virtualTerm);
+    if (agyExtract.isAgy && agyExtract.text) {
+      cleanText = agyExtract.text;
+    }
+  }
+
+  // 2. For regular shell sessions (PowerShell/CMD/Bash), use exact command boundary slice
+  if (!cleanText && session.history.length > 0) {
+    const rawSlice = getHistorySlice(session, session.lastCommandStartOffset);
+    let sliceText = stripAnsi(rawSlice);
+    sliceText = sliceText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+
+    const cleanCmd = session.lastCommandInput
+      ? session.lastCommandInput.replace(/[\r\n]+/g, '\n').trim()
+      : '';
+
+    if (cleanCmd && !sliceText.includes(cleanCmd)) {
+      sliceText = cleanCmd + (sliceText ? '\n' + sliceText : '');
+    }
+    cleanText = sliceText;
+  }
+
+  // 3. Fallback to general virtual term extraction if slice was empty
+  if (!cleanText && session.virtualTerm) {
+    const fallback = extractFromTerminal(session.virtualTerm);
+    cleanText = fallback.text || '';
+  }
+
+  const cleanCmd = session.lastCommandInput
+    ? session.lastCommandInput.replace(/[\r\n]+/g, '\n').trim()
+    : '';
+
+  return {
+    id: session.id,
+    title: session.title,
+    command: cleanCmd,
+    text: cleanText
+  };
+}
+
+function handleSessionInput(session, data) {
+  if (!data || typeof data !== 'string') return;
+
+  // Ctrl+C or Ctrl+Z: current command is cancelled
+  if (data.includes('\x03') || data.includes('\x1a')) {
+    session.awaitingCommandStart = true;
+    session.lastCommandInput = '';
+    return;
+  }
+
+  // If waiting for the start of a new command
+  if (session.awaitingCommandStart) {
+    // Filter out standalone non-input control codes (like bare ESC or null)
+    const isPureControl = data.length === 1 && data.charCodeAt(0) < 32 && data !== '\r' && data !== '\n' && data !== '\t';
+    if (!isPureControl) {
+      session.lastCommandStartOffset = session.totalOutputLength;
+      session.lastCommandInput = '';
+      session.awaitingCommandStart = false;
+    }
+  }
+
+  session.lastCommandInput += data;
+
+  // If the input contains a carriage return or newline, the command was submitted
+  if (data.includes('\r') || data.includes('\n')) {
+    session.awaitingCommandStart = true;
+  }
+}
+
 function createSession(title = 'Terminal') {
   const id = crypto.randomUUID();
   const shell = spawnShell();
@@ -80,28 +330,46 @@ function createSession(title = 'Terminal') {
     env: process.env
   });
 
+  const virtualTerm = new VirtualTerminal({
+    cols: 120,
+    rows: 35,
+    scrollback: 5000,
+    allowProposedApi: true
+  });
+
   const session = {
     id,
     title,
     shell: shell.file,
     pty: term,
+    virtualTerm,
     createdAt: new Date().toISOString(),
     clients: new Set(),
     history: [],
     historyBytes: 0,
+    historyStartOffset: 0,
+    totalOutputLength: 0,
+    lastCommandStartOffset: 0,
+    lastCommandInput: '',
+    awaitingCommandStart: true,
     exited: false
   };
 
   sessions.set(id, session);
 
   term.onData(data => {
-    // Append to rolling scrollback buffer
+    // 1. Maintain virtual terminal state for accurate TUI parsing
+    try { session.virtualTerm.write(data); } catch {}
+
+    // 2. Append to rolling scrollback buffer (raw stream untouched)
     session.history.push(data);
     session.historyBytes += Buffer.byteLength(data, 'utf8');
+    session.totalOutputLength += data.length;
 
     while (session.historyBytes > MAX_HISTORY_BYTES && session.history.length > 1) {
       const removed = session.history.shift();
       session.historyBytes -= Buffer.byteLength(removed, 'utf8');
+      session.historyStartOffset += removed.length;
     }
 
     // Broadcast to all active clients of this session
@@ -223,11 +491,19 @@ wss.on('connection', (ws, req) => {
       }
 
       if (msg.type === 'input' && typeof msg.data === 'string') {
+        handleSessionInput(attachedSession, msg.data);
         attachedSession.pty.write(msg.data);
       } else if (msg.type === 'resize') {
         const cols = Math.max(20, Math.min(300, Number(msg.cols) || 120));
         const rows = Math.max(5, Math.min(100, Number(msg.rows) || 35));
         attachedSession.pty.resize(cols, rows);
+        try { attachedSession.virtualTerm.resize(cols, rows); } catch {}
+      } else if (msg.type === 'copy_last' || msg.type === 'get_last_interaction') {
+        const interaction = getLastInteraction(attachedSession);
+        ws.send(JSON.stringify({
+          type: 'last_interaction',
+          ...interaction
+        }));
       }
     } catch {
       // Ignore malformed client messages.
@@ -249,6 +525,14 @@ app.get('/api/sessions', (req, res) => {
   res.json([...sessions.values()].map(sessionSummary));
 });
 
+app.get('/api/sessions/:id/last-interaction', (req, res) => {
+  const reqToken = req.get('x-auth-token') || req.query.token || '';
+  if (!safeEqual(reqToken, TOKEN)) return res.status(401).json({ error: 'Unauthorized' });
+  const session = sessions.get(req.params.id);
+  if (!session) return res.status(404).json({ error: 'Session not found' });
+  res.json(getLastInteraction(session));
+});
+
 app.post('/api/sessions', express.json(), (req, res) => {
   const reqToken = req.get('x-auth-token') || req.query.token || '';
   if (!safeEqual(reqToken, TOKEN)) return res.status(401).json({ error: 'Unauthorized' });
@@ -265,8 +549,22 @@ app.delete('/api/sessions/:id', (req, res) => {
   if (!safeEqual(reqToken, TOKEN)) return res.status(401).json({ error: 'Unauthorized' });
   const session = sessions.get(req.params.id);
   if (!session) return res.status(404).json({ error: 'Session not found' });
-  session.pty.kill();
+
+  for (const clientWs of session.clients) {
+    try {
+      clientWs.send(JSON.stringify({ type: 'exit', exitCode: 0, reason: 'deleted' }));
+      clientWs.close(1000, 'Session deleted');
+    } catch {}
+  }
+  session.clients.clear();
+
+  try {
+    session.pty.kill();
+  } catch (err) {
+    console.warn(`[DELETE] PTY kill error for session ${session.id}:`, err?.message || err);
+  }
   sessions.delete(session.id);
+  console.log(`[DELETE] Session "${session.title}" (${session.id}) terminated and removed.`);
   res.status(204).end();
 });
 

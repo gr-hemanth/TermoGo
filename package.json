@@ -7,7 +7,7 @@
     "start": "node server/index.js",
     "dev": "node server/index.js",
     "local": "node --env-file=.env server/index.js",
-    "test": "node tests/test-termbridge.js"
+    "test": "node tests/test-termbridge.js && node tests/test-extractor-suite.js && node tests/test-mobile-ui-ux.js"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",

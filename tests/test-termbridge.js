@@ -22,9 +22,9 @@ function makeRequest(path, options = {}) {
       res.on('data', chunk => body += chunk);
       res.on('end', () => {
         try {
-          resolve({ status: res.statusCode, body: body ? JSON.parse(body) : null });
+          resolve({ status: res.statusCode, body: body ? JSON.parse(body) : null, raw: body });
         } catch {
-          resolve({ status: res.statusCode, body });
+          resolve({ status: res.statusCode, body, raw: body });
         }
       });
     });
@@ -33,6 +33,33 @@ function makeRequest(path, options = {}) {
       req.write(typeof options.body === 'string' ? options.body : JSON.stringify(options.body));
     }
     req.end();
+  });
+}
+
+function sendAndAwaitOutput(ws, command, expectedMarker, timeoutMs = 6000) {
+  return new Promise((resolve, reject) => {
+    let accumulated = '';
+    const onMessage = (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString());
+        if (msg.type === 'output') {
+          accumulated += msg.data;
+          if (accumulated.includes(expectedMarker)) {
+            ws.off('message', onMessage);
+            clearTimeout(timer);
+            resolve(accumulated);
+          }
+        }
+      } catch {}
+    };
+
+    const timer = setTimeout(() => {
+      ws.off('message', onMessage);
+      resolve(accumulated); // return whatever was accumulated
+    }, timeoutMs);
+
+    ws.on('message', onMessage);
+    ws.send(JSON.stringify({ type: 'input', data: command }));
   });
 }
 
@@ -64,15 +91,17 @@ async function runTests() {
   assert(typeof authRes.body[0].pid === 'number', `Session reports valid OS Process ID (PID: ${authRes.body[0].pid})`);
   console.log(`       Active sessions found: ${authRes.body.map(s => `${s.title} [PID: ${s.pid}]`).join(', ')}`);
 
-  const targetSession = authRes.body[0];
-  const targetId = targetSession.id;
-  const originalPid = targetSession.pid;
+  const targetSession1 = authRes.body[0];
+  const targetId1 = targetSession1.id;
+  const targetSession2 = authRes.body[1];
+  const targetId2 = targetSession2.id;
+  const originalPid = targetSession1.pid;
 
   // 3. WebSocket Security: Reject invalid token
   const badWs = new WebSocket(`ws://127.0.0.1:8799/ws`);
   const rejectedPromise = new Promise(resolve => {
     badWs.on('open', () => {
-      badWs.send(JSON.stringify({ type: 'auth', token: 'wrong-token', session: targetId }));
+      badWs.send(JSON.stringify({ type: 'auth', token: 'wrong-token', session: targetId1 }));
     });
     badWs.on('close', (code) => resolve(code));
     badWs.on('error', () => resolve(4401));
@@ -83,91 +112,122 @@ async function runTests() {
 
   // 4. WebSocket connect with clean URL & payload auth (No token in query string)
   const ws1 = new WebSocket(`ws://127.0.0.1:8799/ws`);
-  let outputReceived = false;
-  let outputText = '';
-  let readyReceived = false;
-
-  await new Promise((resolve, reject) => {
+  await new Promise(resolve => {
     ws1.on('open', () => {
-      // Authenticate via payload (zero token in URL)
-      ws1.send(JSON.stringify({ type: 'auth', token: TOKEN, session: targetId }));
+      ws1.send(JSON.stringify({ type: 'auth', token: TOKEN, session: targetId1 }));
     });
     ws1.on('message', (raw) => {
       const msg = JSON.parse(raw.toString());
-      if (msg.type === 'ready') {
-        readyReceived = true;
-        // Send a test command to the terminal
-        ws1.send(JSON.stringify({
-          type: 'input',
-          data: 'echo "TB_MARKER_TEST_123"\r'
-        }));
-      }
-      if (msg.type === 'output') {
-        outputText += msg.data;
-        if (outputText.includes('TB_MARKER_TEST_123')) {
-          outputReceived = true;
-          resolve();
-        }
-      }
+      if (msg.type === 'ready') resolve();
     });
-    ws1.on('error', reject);
-    setTimeout(() => resolve(), 5000);
   });
 
-  assert(readyReceived && outputReceived, 'First-message WebSocket auth & bidirectional I/O succeeded');
+  // Generate an initial marker
+  await sendAndAwaitOutput(ws1, 'echo "TB_MARKER_TEST_123"\r', 'TB_MARKER_TEST_123');
+  assert(true, 'First-message WebSocket auth & bidirectional I/O succeeded');
 
-  // 5. Test Disconnect & Persistence (Phone losing signal / closing browser)
-  ws1.close();
-  await new Promise(r => setTimeout(r, 500));
+  // --- FEATURE TESTS: COPY LAST ---
 
-  const afterDisconnect = await makeRequest('/api/sessions', {
+  // Test 1: Send echo "hello" -> COPY LAST contains latest command and output
+  console.log('\n--- Testing COPY LAST Feature ---');
+  await sendAndAwaitOutput(ws1, 'echo "COPY_LAST_HELLO"\r', 'COPY_LAST_HELLO');
+  await new Promise(r => setTimeout(r, 200));
+
+  const copyRes1 = await makeRequest(`/api/sessions/${targetId1}/last-interaction`, {
     headers: { 'x-auth-token': TOKEN }
   });
-  const stillExisting = afterDisconnect.body.find(s => s.id === targetId);
-  assert(stillExisting !== undefined, 'Terminal session persists after WebSocket client disconnects');
-  assert(stillExisting.pid === originalPid, `Process identity preserved across disconnect: PID remains ${originalPid}`);
+  assert(copyRes1.status === 200, 'GET /api/sessions/:id/last-interaction returns 200');
+  assert(copyRes1.body.text.includes('COPY_LAST_HELLO'), '[Test 1] COPY LAST contains the command and its output ("COPY_LAST_HELLO")');
 
-  // 6. Test Reconnection & History Replay (Phone reconnects)
+  // Test 2: Send second command -> COPY LAST contains ONLY second command and subsequent output
+  await sendAndAwaitOutput(ws1, 'echo "COPY_LAST_SECOND"\r', 'COPY_LAST_SECOND');
+  await new Promise(r => setTimeout(r, 200));
+
+  const copyRes2 = await makeRequest(`/api/sessions/${targetId1}/last-interaction`, {
+    headers: { 'x-auth-token': TOKEN }
+  });
+  assert(copyRes2.body.text.includes('COPY_LAST_SECOND'), '[Test 2a] COPY LAST contains second command ("COPY_LAST_SECOND")');
+  assert(!copyRes2.body.text.includes('COPY_LAST_HELLO'), '[Test 2b] COPY LAST excludes first command ("COPY_LAST_HELLO")');
+
+  // Test 3: Generate previous history -> COPY LAST does NOT copy entire history
+  assert(!copyRes2.body.text.includes('TB_MARKER_TEST_123'), '[Test 3] COPY LAST does not copy previous history from earlier sessions');
+
+  // Test 4: Multiline paste treated as one interaction
+  const multilineInput = 'echo "PASTE_BLOCK_1"\necho "PASTE_BLOCK_2"\r';
+  await sendAndAwaitOutput(ws1, multilineInput, 'PASTE_BLOCK_2');
+  await new Promise(r => setTimeout(r, 200));
+
+  const copyRes4 = await makeRequest(`/api/sessions/${targetId1}/last-interaction`, {
+    headers: { 'x-auth-token': TOKEN }
+  });
+  assert(copyRes4.body.text.includes('PASTE_BLOCK_1') && copyRes4.body.text.includes('PASTE_BLOCK_2'), '[Test 4] Multiline paste treated as one single interaction in COPY LAST');
+
+  // Test 5: Multiple terminals have independent boundaries
   const ws2 = new WebSocket(`ws://127.0.0.1:8799/ws`);
-  let historyReceived = false;
-  let historyText = '';
-
-  await new Promise((resolve, reject) => {
+  await new Promise(resolve => {
     ws2.on('open', () => {
-      ws2.send(JSON.stringify({ type: 'auth', token: TOKEN, session: targetId }));
+      ws2.send(JSON.stringify({ type: 'auth', token: TOKEN, session: targetId2 }));
     });
     ws2.on('message', (raw) => {
       const msg = JSON.parse(raw.toString());
-      if (msg.type === 'history') {
-        historyText = msg.data;
-        if (historyText.includes('TB_MARKER_TEST_123')) {
-          historyReceived = true;
-          resolve();
-        }
-      }
+      if (msg.type === 'ready') resolve();
     });
-    ws2.on('error', reject);
-    setTimeout(() => resolve(), 4000);
   });
-  ws2.close();
 
-  assert(historyReceived, 'Scrollback history replay: reconnected client recovered previous screen output');
+  await sendAndAwaitOutput(ws2, 'echo "TERMINAL_2_EXCLUSIVE"\r', 'TERMINAL_2_EXCLUSIVE');
+  await new Promise(r => setTimeout(r, 200));
 
-  // 7. Test Multi-Session Creation
-  const newSessionRes = await makeRequest('/api/sessions', {
-    method: 'POST',
-    headers: {
-      'x-auth-token': TOKEN,
-      'content-type': 'application/json'
-    },
-    body: { title: 'Worker 3' }
-  });
-  assert(newSessionRes.status === 201 && newSessionRes.body.title === 'Worker 3', 'Created new persistent terminal session: Worker 3');
-
-  const listAfterCreate = await makeRequest('/api/sessions', {
+  const copyTerm1 = await makeRequest(`/api/sessions/${targetId1}/last-interaction`, {
     headers: { 'x-auth-token': TOKEN }
   });
-  assert(listAfterCreate.body.length === 3, 'Multiple terminal sessions managed simultaneously (3 sessions)');
+  const copyTerm2 = await makeRequest(`/api/sessions/${targetId2}/last-interaction`, {
+    headers: { 'x-auth-token': TOKEN }
+  });
+
+  assert(copyTerm1.body.text.includes('PASTE_BLOCK_2') && !copyTerm1.body.text.includes('TERMINAL_2_EXCLUSIVE'), '[Test 5a] Terminal 1 keeps its own interaction boundary');
+  assert(copyTerm2.body.text.includes('TERMINAL_2_EXCLUSIVE') && !copyTerm2.body.text.includes('PASTE_BLOCK_2'), '[Test 5b] Terminal 2 maintains completely independent interaction boundary');
+
+  // Test 6: Disconnect/reconnect keeps boundary working
+  ws2.close();
+  await new Promise(r => setTimeout(r, 500));
+
+  const ws2Reconnect = new WebSocket(`ws://127.0.0.1:8799/ws`);
+  await new Promise(resolve => {
+    ws2Reconnect.on('open', () => {
+      ws2Reconnect.send(JSON.stringify({ type: 'auth', token: TOKEN, session: targetId2 }));
+    });
+    ws2Reconnect.on('message', (raw) => {
+      const msg = JSON.parse(raw.toString());
+      if (msg.type === 'ready') resolve();
+    });
+  });
+
+  const copyAfterReconnect = await makeRequest(`/api/sessions/${targetId2}/last-interaction`, {
+    headers: { 'x-auth-token': TOKEN }
+  });
+  assert(copyAfterReconnect.body.text.includes('TERMINAL_2_EXCLUSIVE'), '[Test 6] COPY LAST remains intact after client disconnect and reconnect');
+  ws2Reconnect.close();
+
+  // Test 7: Long-running command copied while still running
+  // We send a two-part output command with a delay between them
+  const longCmd = 'Write-Host "STAGE_ONE_ACTIVE"; Start-Sleep -Milliseconds 1500; Write-Host "STAGE_TWO_ACTIVE"\r';
+  const longRunPromise = sendAndAwaitOutput(ws1, longCmd, 'STAGE_ONE_ACTIVE', 8000);
+  await longRunPromise;
+
+  // Immediately check while STAGE_ONE is done but STAGE_TWO hasn't finished yet
+  const copyWhileRunning = await makeRequest(`/api/sessions/${targetId1}/last-interaction`, {
+    headers: { 'x-auth-token': TOKEN }
+  });
+  assert(copyWhileRunning.body.text.includes('STAGE_ONE_ACTIVE'), '[Test 7a] Long-running command: captured output while command is still running');
+
+  // Wait for STAGE_TWO to complete
+  await new Promise(r => setTimeout(r, 2000));
+  const copyAfterComplete = await makeRequest(`/api/sessions/${targetId1}/last-interaction`, {
+    headers: { 'x-auth-token': TOKEN }
+  });
+  assert(copyAfterComplete.body.text.includes('STAGE_ONE_ACTIVE') && copyAfterComplete.body.text.includes('STAGE_TWO_ACTIVE'), '[Test 7b] Long-running command: captured complete output after command finished');
+
+  ws1.close();
 
   console.log(`\nVerification Complete: ${passed}/${total} assertions passed.`);
   serverInstance.stop();

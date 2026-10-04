@@ -168,31 +168,49 @@
     .terminal-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 14px 16px;
-      cursor: pointer;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 12px;
       transition: border-color 0.2s, background 0.2s;
-    }
-    .terminal-card:active {
-      background: #1c2128;
-      border-color: var(--accent);
     }
     .terminal-card.active-session {
       border-color: var(--accent);
       background: #121824;
+    }
+    .terminal-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
     }
     .terminal-card-info {
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
+    .terminal-card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .terminal-card-title {
-      font-weight: 600;
-      font-size: 15px;
+      font-weight: 700;
+      font-size: 16px;
       color: #fff;
+    }
+    .badge-current {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      background: rgba(47, 129, 247, 0.15);
+      border: 1px solid rgba(47, 129, 247, 0.35);
+      border-radius: 10px;
+      padding: 2px 7px;
+      text-transform: uppercase;
     }
     .terminal-card-sub {
       font-size: 12px;
@@ -206,12 +224,83 @@
       font-size: 12px;
       color: var(--green-dot);
       font-weight: 500;
+      flex-shrink: 0;
+    }
+    .terminal-card-meta.exited {
+      color: var(--red-dot);
     }
     .terminal-card-meta .dot {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: var(--green-dot);
+    }
+    .terminal-card-meta.exited .dot {
+      background: var(--red-dot);
+    }
+    .terminal-card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .btn-card-open {
+      flex: 1;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      border-radius: 8px;
+      min-height: 42px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .btn-card-open:active {
+      background: #30363d;
+    }
+    .btn-card-open.is-current {
+      background: #1f6feb;
+      border-color: #388bfd;
+      color: #ffffff;
+    }
+    .btn-card-open.is-current:active {
+      background: #388bfd;
+    }
+    .btn-card-delete {
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #211618;
+      border: 1px solid #482324;
+      color: #f85149;
+      border-radius: 8px;
+      min-height: 42px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .btn-card-delete:active {
+      background: #da3633;
+      border-color: #f85149;
+      color: #ffffff;
+    }
+    .empty-terminals {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      background: var(--card-bg);
+      border: 1px dashed var(--card-border);
+      border-radius: 12px;
+      margin-top: 10px;
     }
 
     /* Active Terminal View */
@@ -262,33 +351,77 @@
       border-top: 1px solid var(--card-border);
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 8px;
+      gap: 8px;
+      padding: 7px 10px;
       overflow-x: auto;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x;
+      flex-shrink: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
     .mobile-toolbar::-webkit-scrollbar { display: none; }
     .tool-key {
       background: #21262d;
       color: var(--text);
       border: 1px solid #30363d;
-      border-radius: 6px;
-      padding: 6px 12px;
+      border-radius: 8px;
+      padding: 8px 12px;
       font-size: 13px;
       font-weight: 600;
-      font-family: monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
       cursor: pointer;
       user-select: none;
+      -webkit-user-select: none;
       white-space: nowrap;
-      min-width: 40px;
+      min-width: 44px;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
+      transition: background 0.1s ease, transform 0.05s ease;
+      flex-shrink: 0;
     }
-    .tool-key:active { background: #388bfd; color: #fff; }
+    .tool-key:active {
+      background: #30363d;
+      transform: scale(0.96);
+    }
+    .tool-key-stop {
+      background: #da3633;
+      border: 1px solid #f85149;
+      color: #ffffff;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 8px 14px;
+    }
+    .tool-key-stop:active {
+      background: #b62324;
+      border-color: #da3633;
+      transform: scale(0.96);
+    }
+    .tool-key-copy-last {
+      background: #238636;
+      border: 1px solid #2ea043;
+      color: #ffffff;
+      font-weight: 700;
+      padding: 8px 12px;
+    }
+    .tool-key-copy-last:active {
+      background: #2ea043;
+      transform: scale(0.96);
+    }
     .tool-key.active-ctrl {
       background: #1f6feb;
       border-color: #58a6ff;
-      color: #fff;
+      color: #ffffff;
+      box-shadow: 0 0 6px rgba(47, 129, 247, 0.5);
+    }
+    .tool-key-arrow {
+      font-size: 15px;
+      min-width: 42px;
     }
 
     /* Paste / Prompt Input Footer */
@@ -299,6 +432,7 @@
       padding-bottom: calc(6px + var(--safe-bottom));
       background: #0f1217;
       border-top: 1px solid var(--card-border);
+      flex-shrink: 0;
     }
     .input-box {
       flex: 1;
@@ -314,7 +448,7 @@
     }
     .input-box:focus { border-color: var(--accent); }
 
-    /* Auth Modal */
+    /* Modals */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -339,6 +473,58 @@
     }
     .modal-title { font-size: 17px; font-weight: 700; color: #fff; }
     .modal-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+    .delete-modal-box {
+      background: #161314;
+      border-color: #482324;
+    }
+    .delete-modal-term-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      padding: 10px 14px;
+      background: #211618;
+      border-radius: 8px;
+      border: 1px solid #482324;
+      font-family: monospace;
+      text-align: center;
+      margin: 2px 0;
+      word-break: break-all;
+    }
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .btn-modal-cancel {
+      flex: 1;
+      min-height: 42px;
+      font-size: 14px;
+      font-weight: 600;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-modal-cancel:active {
+      background: #30363d;
+    }
+    .btn-danger {
+      flex: 1;
+      min-height: 42px;
+      font-size: 14px;
+      font-weight: 700;
+      background: #da3633;
+      border: 1px solid #f85149;
+      color: #ffffff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .btn-danger:active {
+      background: #b62324;
+    }
   </style>
 </head>
 <body>
@@ -355,7 +541,7 @@
     </div>
   </div>
   <div class="header-actions">
-    <button id="btn-toggle-view" class="btn" style="display:none;">Terminals</button>
+    <button id="btn-toggle-view" class="btn">Terminals</button>
     <button id="btn-new-term" class="btn btn-primary">+ Terminal</button>
   </div>
 </header>
@@ -375,10 +561,11 @@
 <div id="view-terminal">
   <div class="terminal-subbar">
     <div id="current-term-name" class="current-session-label">
-      <span>PowerShell</span> <small style="color:var(--text-muted)">◀ Switch</small>
+      <span>PowerShell</span> <small style="color:var(--text-muted)">◀ Terminals</small>
     </div>
-    <div style="display:flex; gap:6px;">
-      <button id="btn-reconnect" class="btn" style="padding:3px 8px; font-size:11px;">Reconnect</button>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button id="btn-copy-last" class="btn btn-primary" style="padding:4px 10px; font-size:12px; font-weight:700; background:#238636; border-color:#2ea043; color:#fff;">📋 COPY LAST</button>
+      <button id="btn-reconnect" class="btn" style="padding:4px 8px; font-size:11px;">Reconnect</button>
     </div>
   </div>
 
@@ -386,21 +573,37 @@
 
   <!-- Mobile Touch Key Helper Bar -->
   <div class="mobile-toolbar">
+    <button class="tool-key tool-key-stop" id="key-stop" title="Stop running command (Ctrl+C)" aria-label="Stop running command">■ STOP</button>
+    <button class="tool-key tool-key-copy-last" id="key-copy-last" title="Copy last command output" aria-label="Copy last interaction">📋 COPY LAST</button>
     <button class="tool-key" id="key-esc">ESC</button>
     <button class="tool-key" id="key-tab">TAB</button>
     <button class="tool-key" id="key-ctrl">CTRL</button>
-    <button class="tool-key" id="key-ctrl-c" style="color:#f85149;">^C</button>
-    <button class="tool-key" id="key-copy">COPY</button>
-    <button class="tool-key" id="key-up">▲</button>
-    <button class="tool-key" id="key-down">▼</button>
-    <button class="tool-key" id="key-left">◀</button>
-    <button class="tool-key" id="key-right">▶</button>
+    <button class="tool-key tool-key-arrow" id="key-up" aria-label="Up">▲</button>
+    <button class="tool-key tool-key-arrow" id="key-down" aria-label="Down">▼</button>
+    <button class="tool-key tool-key-arrow" id="key-left" aria-label="Left">◀</button>
+    <button class="tool-key tool-key-arrow" id="key-right" aria-label="Right">▶</button>
+    <button class="tool-key" id="key-copy" title="Copy selected text">SEL</button>
   </div>
 
   <!-- Paste / Text Command Footer -->
   <div class="terminal-footer">
     <input id="prompt-input" class="input-box" placeholder="Type or paste command…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
     <button id="btn-send-prompt" class="btn btn-primary">Send</button>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="modal-overlay">
+  <div class="modal-box delete-modal-box">
+    <div class="modal-title" style="color:#f85149; display:flex; align-items:center; gap:8px;">
+      <span>⚠️</span> Delete terminal?
+    </div>
+    <div id="delete-modal-term-name" class="delete-modal-term-name">"AGY"</div>
+    <div class="modal-desc">This will stop the terminal process and permanently remove this session.</div>
+    <div class="modal-actions">
+      <button id="btn-cancel-delete" class="btn btn-modal-cancel">Cancel</button>
+      <button id="btn-confirm-delete" class="btn btn-danger">Delete</button>
+    </div>
   </div>
 </div>
 
@@ -476,17 +679,24 @@
   const statusText = document.getElementById('status-text');
   const currentTermName = document.getElementById('current-term-name');
   const btnReconnect = document.getElementById('btn-reconnect');
+  const btnCopyLast = document.getElementById('btn-copy-last');
   const promptInput = document.getElementById('prompt-input');
   const btnSendPrompt = document.getElementById('btn-send-prompt');
   const authModal = document.getElementById('auth-modal');
   const authTokenInput = document.getElementById('auth-token-input');
   const btnSubmitToken = document.getElementById('btn-submit-token');
+  const deleteModal = document.getElementById('delete-modal');
+  const deleteModalTermName = document.getElementById('delete-modal-term-name');
+  const btnCancelDelete = document.getElementById('btn-cancel-delete');
+  const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+  let pendingDeleteSession = null;
 
   // Mobile Key Buttons
+  const keyStop = document.getElementById('key-stop');
+  const keyCopyLast = document.getElementById('key-copy-last');
   const keyEsc = document.getElementById('key-esc');
   const keyTab = document.getElementById('key-tab');
   const keyCtrl = document.getElementById('key-ctrl');
-  const keyCtrlC = document.getElementById('key-ctrl-c');
   const keyCopy = document.getElementById('key-copy');
   const keyUp = document.getElementById('key-up');
   const keyDown = document.getElementById('key-down');
@@ -565,30 +775,132 @@
     return res.json();
   }
 
+  // --- Delete Confirmation Modal Logic ---
+  function openDeleteModal(id, title) {
+    pendingDeleteSession = { id, title };
+    deleteModalTermName.textContent = `"${title || 'Terminal'}"`;
+    btnConfirmDelete.textContent = 'Delete';
+    btnConfirmDelete.disabled = false;
+    deleteModal.style.display = 'flex';
+  }
+
+  function closeDeleteModal() {
+    pendingDeleteSession = null;
+    deleteModal.style.display = 'none';
+  }
+
+  if (btnCancelDelete) btnCancelDelete.onclick = closeDeleteModal;
+  if (deleteModal) {
+    deleteModal.onclick = (e) => {
+      if (e.target === deleteModal) closeDeleteModal();
+    };
+  }
+
+  if (btnConfirmDelete) {
+    btnConfirmDelete.onclick = async () => {
+      if (!pendingDeleteSession) return;
+      const { id } = pendingDeleteSession;
+      btnConfirmDelete.textContent = 'Deleting...';
+      btnConfirmDelete.disabled = true;
+
+      try {
+        const res = await fetch(`${base}/api/sessions/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { 'x-auth-token': token }
+        });
+
+        if (!res.ok && res.status !== 404) {
+          throw new Error(`Server returned HTTP ${res.status}`);
+        }
+
+        // If the deleted session was the currently active one
+        if (currentSessionId === id) {
+          if (ws) {
+            ws.onclose = null;
+            ws.close();
+            ws = null;
+          }
+          clearTimeout(reconnectTimer);
+          currentSessionId = null;
+          currentSessionTitle = '';
+          if (term) term.reset();
+        }
+
+        closeDeleteModal();
+        await refreshSessionsList();
+        showListView();
+      } catch (err) {
+        alert('Failed to delete terminal: ' + err.message);
+        btnConfirmDelete.textContent = 'Delete';
+        btnConfirmDelete.disabled = false;
+      }
+    };
+  }
+
   // --- Render Terminals List ---
   function renderTerminalsView(sessions) {
     activeSessions = sessions;
     terminalsList.innerHTML = '';
 
     if (sessions.length === 0) {
-      terminalsList.innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center;">No active terminals. Tap "+ Terminal" to create one.</div>';
+      terminalsList.innerHTML = `
+        <div class="empty-terminals">
+          <div style="font-size:36px; margin-bottom:10px;">💻</div>
+          <div style="font-weight:700; font-size:16px; color:#fff; margin-bottom:6px;">No Active Terminals</div>
+          <div style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">All terminal sessions have been removed.</div>
+          <button id="btn-empty-new-term" class="btn btn-primary" style="padding:10px 20px; font-size:14px; font-weight:600;">+ Terminal</button>
+        </div>
+      `;
+      const btnEmptyNew = document.getElementById('btn-empty-new-term');
+      if (btnEmptyNew) btnEmptyNew.onclick = handleNewTerminal;
+      if (btnToggleView) btnToggleView.style.display = 'none';
       return;
     }
 
     sessions.forEach(s => {
+      const isCurrent = s.id === currentSessionId;
+      const isExited = s.status === 'exited';
       const card = document.createElement('div');
-      card.className = `terminal-card ${s.id === currentSessionId ? 'active-session' : ''}`;
+      card.className = `terminal-card ${isCurrent ? 'active-session' : ''}`;
       card.innerHTML = `
-        <div class="terminal-card-info">
-          <div class="terminal-card-title">${escapeHtml(s.title || 'Terminal')}</div>
-          <div class="terminal-card-sub">${escapeHtml(s.shell || '')} ${s.pid ? `• PID ${s.pid}` : ''}</div>
+        <div class="terminal-card-top">
+          <div class="terminal-card-info">
+            <div class="terminal-card-title-row">
+              <span class="terminal-card-title">${escapeHtml(s.title || 'Terminal')}</span>
+              ${isCurrent ? '<span class="badge-current">CURRENT</span>' : ''}
+            </div>
+            <div class="terminal-card-sub">${escapeHtml(s.shell || '')} ${s.pid ? `• PID ${s.pid}` : ''}</div>
+          </div>
+          <div class="terminal-card-meta ${isExited ? 'exited' : ''}">
+            <span class="dot"></span>
+            <span>${isExited ? 'Exited' : 'Running'}</span>
+          </div>
         </div>
-        <div class="terminal-card-meta">
-          <span class="dot"></span>
-          <span>Running</span>
+        <div class="terminal-card-actions">
+          <button class="btn btn-card-open ${isCurrent ? 'is-current' : ''}">
+            ${isCurrent ? '◀ Active Terminal' : 'Open'}
+          </button>
+          <button class="btn btn-card-delete">
+            Delete
+          </button>
         </div>
       `;
-      card.onclick = () => openSession(s.id, s.title);
+
+      const btnOpen = card.querySelector('.btn-card-open');
+      btnOpen.onclick = (e) => {
+        e.stopPropagation();
+        openSession(s.id, s.title);
+      };
+
+      const topPart = card.querySelector('.terminal-card-top');
+      topPart.onclick = () => openSession(s.id, s.title);
+
+      const btnDel = card.querySelector('.btn-card-delete');
+      btnDel.onclick = (e) => {
+        e.stopPropagation();
+        openDeleteModal(s.id, s.title);
+      };
+
       terminalsList.appendChild(card);
     });
   }
@@ -601,7 +913,12 @@
   function showListView() {
     viewTerminal.style.display = 'none';
     viewTerminals.style.display = 'flex';
-    btnToggleView.style.display = 'none';
+    if (currentSessionId) {
+      btnToggleView.style.display = 'inline-flex';
+      btnToggleView.textContent = '◀ Terminal';
+    } else {
+      btnToggleView.style.display = 'none';
+    }
     refreshSessionsList();
   }
 
@@ -744,13 +1061,19 @@
   }
 
   // Mobile Key Bar Handlers
+  if (keyStop) {
+    keyStop.onclick = () => {
+      sendInput('\x03');
+      logDebug('CMD_STOP', 'Sent Ctrl+C interrupt (\\x03) to terminal');
+      if (term) term.focus();
+    };
+  }
   keyEsc.onclick = () => { sendInput('\x1b'); if (term) term.focus(); };
   keyTab.onclick = () => { sendInput('\t'); if (term) term.focus(); };
   keyCtrl.onclick = () => {
     ctrlActive = !ctrlActive;
     keyCtrl.classList.toggle('active-ctrl', ctrlActive);
   };
-  keyCtrlC.onclick = () => { sendInput('\x03'); if (term) term.focus(); };
   keyCopy.onclick = async () => {
     if (!term) return;
     const selection = term.getSelection();
@@ -758,13 +1081,13 @@
       try {
         await navigator.clipboard.writeText(selection);
         keyCopy.textContent = 'COPIED!';
-        setTimeout(() => { keyCopy.textContent = 'COPY'; }, 1000);
+        setTimeout(() => { keyCopy.textContent = 'SEL'; }, 1000);
       } catch {
         prompt('Selected text:', selection);
       }
     } else {
       keyCopy.textContent = 'SELECT 1ST';
-      setTimeout(() => { keyCopy.textContent = 'COPY'; }, 1000);
+      setTimeout(() => { keyCopy.textContent = 'SEL'; }, 1000);
     }
   };
   keyUp.onclick = () => { sendInput('\x1b[A'); if (term) term.focus(); };
@@ -787,6 +1110,235 @@
     }
   });
 
+  function stripAnsi(str) {
+    if (!str) return '';
+    return str
+      .replace(/\x1b\[[0-9:;<=>?]*[ !"#$%&'()*+,-./]*[@-~]/g, '')
+      .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+      .replace(/\x1b[P^_][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+      .replace(/\x1b[NO][ -~]/g, '')
+      .replace(/\x1b[ %()*+-./][@-~]/g, '')
+      .replace(/\x1b[=><#][0-9A-Za-z]/g, '')
+      .replace(/\x1b[6-9c-zCEHMNOXYZ]/g, '')
+      .replace(/\x1b+/g, '')
+      .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
+  }
+
+  function extractCleanResponseFromLines(rawLines) {
+    if (!rawLines || rawLines.length === 0) return '';
+    const lines = rawLines.map(l => stripAnsi(l || '').trimEnd());
+
+    let lastNonEmpty = lines.length - 1;
+    while (lastNonEmpty >= 0 && !lines[lastNonEmpty].trim()) {
+      lastNonEmpty--;
+    }
+    if (lastNonEmpty < 0) return { text: '', isAgy: false };
+
+    let footerPromptBoxTop = -1;
+    let isAgySession = false;
+
+    for (let i = lastNonEmpty; i >= Math.max(0, lastNonEmpty - 8); i--) {
+      const line = lines[i].trim();
+      if (/^>\s*$/.test(line)) {
+        for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
+          if (/^[─\-_=━―—\s]{3,}$/.test(lines[j].trim())) {
+            footerPromptBoxTop = j;
+            isAgySession = true;
+            break;
+          }
+        }
+        if (footerPromptBoxTop !== -1) break;
+      }
+    }
+
+    let responseEndIndex = lastNonEmpty;
+    if (isAgySession && footerPromptBoxTop !== -1) {
+      responseEndIndex = footerPromptBoxTop - 1;
+    } else {
+      const lastLine = lines[lastNonEmpty].trim();
+      if (/^(PS [A-Z]:\\.*>|[a-zA-Z0-9_\-@]+[:#$\s].*[$#>])\s*$/.test(lastLine) || /^>\s*$/.test(lastLine)) {
+        responseEndIndex = lastNonEmpty - 1;
+      }
+    }
+
+    while (responseEndIndex >= 0 && !lines[responseEndIndex].trim()) {
+      responseEndIndex--;
+    }
+    if (responseEndIndex < 0) return { text: '', isAgy: isAgySession };
+
+    let responseStartIndex = 0;
+    for (let i = responseEndIndex; i >= 0; i--) {
+      const line = lines[i].trim();
+      const isToolCall = /^[●•*]\s+[A-Za-z0-9_]+\s*\(.*\)/.test(line) ||
+                         /^[●•*]\s+(Bash|Read|Edit|Write|Task|Glob|Grep|Browse|Run)\b/i.test(line) ||
+                         /^\s*└─\s+(exit|status|result)/i.test(line);
+
+      if (isToolCall) {
+        responseStartIndex = i + 1;
+        break;
+      }
+
+      if (/^[─\-_=━―—\s]{10,}$/.test(line)) {
+        if (i > 0 && /^>\s+\S+/.test(lines[i - 1].trim())) {
+          responseStartIndex = i + 1;
+          break;
+        }
+        responseStartIndex = i + 1;
+        break;
+      }
+
+      if (/^>\s+[a-zA-Z0-9]/.test(line) && (i === 0 || /^[─\-_=━―—\s]{3,}$/.test(lines[i-1]?.trim() || ''))) {
+        responseStartIndex = i + 1;
+        break;
+      }
+    }
+
+    while (responseStartIndex <= responseEndIndex && !lines[responseStartIndex].trim()) {
+      responseStartIndex++;
+    }
+
+    if (responseStartIndex > responseEndIndex) return { text: '', isAgy: isAgySession };
+    return {
+      text: lines.slice(responseStartIndex, responseEndIndex + 1).join('\n').trim(),
+      isAgy: isAgySession
+    };
+  }
+
+  function extractFromTerminal(targetTerm) {
+    if (!targetTerm || !targetTerm.buffer || !targetTerm.buffer.active) return { text: '', isAgy: false };
+    const buffer = targetTerm.buffer.active;
+    const lines = [];
+
+    for (let i = 0; i < buffer.length; i++) {
+      const lineObj = buffer.getLine(i);
+      if (!lineObj) continue;
+      const str = lineObj.translateToString(true);
+      if (lineObj.isWrapped && lines.length > 0) {
+        lines[lines.length - 1] += str;
+      } else {
+        lines.push(str);
+      }
+    }
+
+    return extractCleanResponseFromLines(lines);
+  }
+
+  // COPY LAST Handler
+  async function triggerCopyLast() {
+    if (!currentSessionId) return;
+
+    const originalText = '📋 COPY LAST';
+    if (btnCopyLast) {
+      btnCopyLast.textContent = '⏳ Copying...';
+      btnCopyLast.disabled = true;
+    }
+
+    try {
+      let textToCopy = '';
+      const localExtract = term ? extractFromTerminal(term) : { text: '', isAgy: false };
+      if (localExtract.isAgy && localExtract.text) {
+        // AGY session: instant extraction from local screen buffer
+        textToCopy = localExtract.text;
+      } else {
+        // Regular shell: fetch exact command boundary from server
+        try {
+          const res = await fetch(`${base}/api/sessions/${currentSessionId}/last-interaction`, {
+            headers: { 'x-auth-token': token }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            textToCopy = data.text || '';
+          }
+        } catch (fetchErr) {
+          console.warn('[COPY_LAST] server fallback error:', fetchErr);
+        }
+        if (!textToCopy && localExtract.text) {
+          textToCopy = localExtract.text;
+        }
+      }
+
+
+      if (!textToCopy) {
+        if (btnCopyLast) btnCopyLast.textContent = 'Nothing yet';
+        setTimeout(() => {
+          if (btnCopyLast) {
+            btnCopyLast.textContent = originalText;
+            btnCopyLast.disabled = false;
+          }
+        }, 1200);
+        return;
+      }
+
+      let copied = false;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(textToCopy);
+          copied = true;
+        } catch (clipErr) {
+          console.warn('[CLIPBOARD] writeText error, attempting fallback:', clipErr);
+        }
+      }
+
+      if (!copied) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = textToCopy;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          copied = document.execCommand('copy');
+          document.body.removeChild(ta);
+        } catch (e) {
+          console.warn('[CLIPBOARD] execCommand error:', e);
+        }
+      }
+
+      if (copied) {
+        logDebug('COPY_LAST', `Copied ${textToCopy.length} chars to clipboard`);
+        if (btnCopyLast) {
+          btnCopyLast.textContent = '✓ Copied';
+          btnCopyLast.style.background = '#1f6feb';
+          btnCopyLast.style.borderColor = '#58a6ff';
+        }
+        if (keyCopyLast) keyCopyLast.textContent = '✓ COPIED';
+
+        setTimeout(() => {
+          if (btnCopyLast) {
+            btnCopyLast.textContent = originalText;
+            btnCopyLast.style.background = '';
+            btnCopyLast.style.borderColor = '';
+            btnCopyLast.disabled = false;
+          }
+          if (keyCopyLast) keyCopyLast.textContent = 'COPY LAST';
+        }, 1500);
+      } else {
+        logDebug('CLIP_FAIL', 'Clipboard permission unavailable');
+        if (btnCopyLast) btnCopyLast.textContent = '⚠️ Copy failed';
+        setTimeout(() => {
+          if (btnCopyLast) {
+            btnCopyLast.textContent = originalText;
+            btnCopyLast.disabled = false;
+          }
+        }, 2000);
+      }
+    } catch (err) {
+      logDebug('COPY_ERR', err.message);
+      if (btnCopyLast) btnCopyLast.textContent = '⚠️ Error';
+      setTimeout(() => {
+        if (btnCopyLast) {
+          btnCopyLast.textContent = originalText;
+          btnCopyLast.disabled = false;
+        }
+      }, 1500);
+    }
+  }
+
+  if (btnCopyLast) btnCopyLast.onclick = triggerCopyLast;
+  if (keyCopyLast) keyCopyLast.onclick = triggerCopyLast;
+
   // Reconnect Button
   btnReconnect.onclick = () => {
     if (currentSessionId) connect(currentSessionId);
@@ -803,17 +1355,18 @@
   };
 
   // New Terminal
-  btnNewTerm.onclick = async () => {
+  async function handleNewTerminal() {
     const title = prompt('Terminal Title:', 'Terminal');
     if (title === null) return;
     try {
-      const session = await createNewSession(title);
+      const session = await createNewSession(title.trim() || 'Terminal');
       await refreshSessionsList();
       openSession(session.id, session.title);
     } catch (e) {
       alert('Could not create terminal: ' + e.message);
     }
-  };
+  }
+  btnNewTerm.onclick = handleNewTerminal;
 
   // --- Auth Modal Handlers ---
   function showAuthModal() {
