@@ -58,6 +58,8 @@ function sessionSummary(s) {
     title: s.title,
     shell: s.shell,
     pid: s.pty ? s.pty.pid : null,
+    cols: s.pty ? s.pty.cols : 120,
+    rows: s.pty ? s.pty.rows : 35,
     createdAt: s.createdAt,
     clientCount: s.clients.size,
     status: s.exited ? 'exited' : 'running'
@@ -337,6 +339,23 @@ function createSession(title = 'Terminal') {
     allowProposedApi: true
   });
 
+  let pendingOutput = '';
+  let flushTimer = null;
+
+  function flushOutput() {
+    if (flushTimer) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+    if (!pendingOutput) return;
+    const dataToSend = pendingOutput;
+    pendingOutput = '';
+    const message = JSON.stringify({ type: 'output', data: dataToSend });
+    for (const ws of session.clients) {
+      if (ws.readyState === 1) ws.send(message);
+    }
+  }
+
   const session = {
     id,
     title,
@@ -352,7 +371,8 @@ function createSession(title = 'Terminal') {
     lastCommandStartOffset: 0,
     lastCommandInput: '',
     awaitingCommandStart: true,
-    exited: false
+    exited: false,
+    flushOutput
   };
 
   sessions.set(id, session);
@@ -372,14 +392,18 @@ function createSession(title = 'Terminal') {
       session.historyStartOffset += removed.length;
     }
 
-    // Broadcast to all active clients of this session
-    const message = JSON.stringify({ type: 'output', data });
-    for (const ws of session.clients) {
-      if (ws.readyState === 1) ws.send(message);
+    // 3. Coalesce rapid PTY output chunks into 8ms micro-batches
+    // Preserves ordering, ANSI/VT escape sequences, eliminates mobile event-loop flooding
+    pendingOutput += data;
+    if (pendingOutput.length >= 4096) {
+      flushOutput();
+    } else if (!flushTimer) {
+      flushTimer = setTimeout(flushOutput, 8);
     }
   });
 
   term.onExit(({ exitCode }) => {
+    flushOutput();
     session.exited = true;
     const message = JSON.stringify({ type: 'exit', exitCode });
     for (const ws of session.clients) {
@@ -440,9 +464,14 @@ wss.on('connection', (ws, req) => {
     clearTimeout(authTimeout);
     attachedSession = session;
     session.clients.add(ws);
-    console.log(`[WS] Session attached: "${session.title}" (PID: ${session.pty.pid})`);
+    console.log(`[WS] Session attached: "${session.title}" (PID: ${session.pty.pid}, ${session.pty.cols}x${session.pty.rows})`);
 
-    // Send ready event with session details including OS PID
+    // Flush any pending coalesced output before sending state
+    if (typeof session.flushOutput === 'function') {
+      session.flushOutput();
+    }
+
+    // Send ready event with session details including OS PID and dimensions
     ws.send(JSON.stringify({
       type: 'ready',
       session: sessionSummary(session)
@@ -482,6 +511,19 @@ wss.on('connection', (ws, req) => {
           ws.close();
           return;
         }
+
+        // Synchronize terminal dimensions BEFORE attaching and sending history
+        if (msg.cols && msg.rows) {
+          const cols = Math.max(20, Math.min(300, Number(msg.cols) || 120));
+          const rows = Math.max(5, Math.min(100, Number(msg.rows) || 35));
+          if (targetSession.pty && (targetSession.pty.cols !== cols || targetSession.pty.rows !== rows)) {
+            try {
+              targetSession.pty.resize(cols, rows);
+              targetSession.virtualTerm.resize(cols, rows);
+            } catch {}
+          }
+        }
+
         attachToSession(targetSession);
         return;
       }
@@ -496,8 +538,10 @@ wss.on('connection', (ws, req) => {
       } else if (msg.type === 'resize') {
         const cols = Math.max(20, Math.min(300, Number(msg.cols) || 120));
         const rows = Math.max(5, Math.min(100, Number(msg.rows) || 35));
-        attachedSession.pty.resize(cols, rows);
-        try { attachedSession.virtualTerm.resize(cols, rows); } catch {}
+        if (attachedSession.pty && (attachedSession.pty.cols !== cols || attachedSession.pty.rows !== rows)) {
+          attachedSession.pty.resize(cols, rows);
+          try { attachedSession.virtualTerm.resize(cols, rows); } catch {}
+        }
       } else if (msg.type === 'copy_last' || msg.type === 'get_last_interaction') {
         const interaction = getLastInteraction(attachedSession);
         ws.send(JSON.stringify({

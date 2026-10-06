@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
   <title>TermBridge</title>
   <!-- Self-hosted local assets (Zero external CDN dependency) -->
   <link rel="stylesheet" href="/vendor/xterm.css">
@@ -31,7 +31,9 @@
       margin: 0;
       padding: 0;
       width: 100%;
+      width: var(--app-width, 100%);
       height: 100%;
+      height: var(--app-height, 100dvh);
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -927,11 +929,14 @@
     viewTerminal.style.display = 'flex';
     btnToggleView.style.display = 'inline-flex';
     btnToggleView.textContent = 'Terminals';
-    setTimeout(() => {
-      if (fit) fit.fit();
+    updateViewportDimensions();
+    requestAnimationFrame(() => {
+      if (fit) {
+        try { fit.fit(); } catch {}
+      }
       sendResize();
       if (term) term.focus();
-    }, 50);
+    });
   }
 
   async function refreshSessionsList() {
@@ -944,6 +949,9 @@
   }
 
   function openSession(id, title) {
+    if (currentSessionId && currentSessionId !== id && term) {
+      term.reset();
+    }
     currentSessionId = id;
     currentSessionTitle = title || 'Terminal';
     currentTermName.querySelector('span').textContent = currentSessionTitle;
@@ -952,6 +960,9 @@
   }
 
   // --- WebSocket Live Connection ---
+  let lastCols = 0;
+  let lastRows = 0;
+
   function connect(id) {
     if (!id) return;
     currentSessionId = id;
@@ -971,14 +982,28 @@
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      logDebug('WS_OPEN', 'Sending auth payload...');
-      // Authenticate via first message inside encrypted TLS frame
-      ws.send(JSON.stringify({ type: 'auth', token, session: id }));
-      logDebug('WS_AUTH_SENT', `session=${id.slice(0, 8)}...`);
+      logDebug('WS_OPEN', 'Sending auth payload with dimensions...');
+      // Ensure fit is applied so accurate dimensions are passed in initial auth handshake
+      updateViewportDimensions();
+      if (fit) {
+        try { fit.fit(); } catch {}
+      }
+      const initialCols = term ? term.cols : 80;
+      const initialRows = term ? term.rows : 24;
+      lastCols = initialCols;
+      lastRows = initialRows;
+
+      // Authenticate via first message inside encrypted TLS frame with actual terminal dimensions
+      ws.send(JSON.stringify({
+        type: 'auth',
+        token,
+        session: id,
+        cols: initialCols,
+        rows: initialRows
+      }));
+      logDebug('WS_AUTH_SENT', `session=${id.slice(0, 8)}... (${initialCols}x${initialRows})`);
       reconnectAttempts = 0;
       updateStatus('connected', 'Connected');
-      if (fit) fit.fit();
-      sendResize();
     };
 
     ws.onmessage = (e) => {
@@ -992,8 +1017,12 @@
         } else if (msg.type === 'history') {
           if (term) {
             term.reset();
-            term.write(msg.data);
-            if (fit) fit.fit();
+            term.write(msg.data, () => {
+              if (fit) {
+                try { fit.fit(); } catch {}
+              }
+              sendResize();
+            });
           }
         } else if (msg.type === 'output') {
           if (term) term.write(msg.data);
@@ -1028,13 +1057,17 @@
     };
   }
 
-  function sendResize() {
+  function sendResize(force = false) {
     if (ws && ws.readyState === WebSocket.OPEN && term) {
-      ws.send(JSON.stringify({
-        type: 'resize',
-        cols: term.cols,
-        rows: term.rows
-      }));
+      if (force || term.cols !== lastCols || term.rows !== lastRows) {
+        lastCols = term.cols;
+        lastRows = term.rows;
+        ws.send(JSON.stringify({
+          type: 'resize',
+          cols: term.cols,
+          rows: term.rows
+        }));
+      }
     }
   }
 
@@ -1383,17 +1416,37 @@
     bootstrap();
   };
 
-  // --- Viewport & Orientation Resize Adaptation ---
+  // --- Dynamic Viewport & Orientation Resize Adaptation ---
+  function updateViewportDimensions() {
+    const vv = window.visualViewport;
+    const h = vv ? Math.round(vv.height) : window.innerHeight;
+    const w = vv ? Math.round(vv.width) : window.innerWidth;
+    document.documentElement.style.setProperty('--app-height', `${h}px`);
+    document.documentElement.style.setProperty('--app-width', `${w}px`);
+    if (window.scrollY !== 0 || window.scrollX !== 0) {
+      window.scrollTo(0, 0);
+    }
+  }
+
   function handleResize() {
+    updateViewportDimensions();
     if (viewTerminal.style.display !== 'none') {
-      if (fit) fit.fit();
+      if (fit) {
+        try { fit.fit(); } catch {}
+      }
       sendResize();
     }
   }
+
+  updateViewportDimensions();
   window.addEventListener('resize', handleResize);
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', handleResize);
+    window.visualViewport.addEventListener('scroll', updateViewportDimensions);
   }
+  window.addEventListener('orientationchange', () => {
+    setTimeout(handleResize, 100);
+  });
 
   // --- Visibility Change (Phone Screen Wake) ---
   document.addEventListener('visibilitychange', () => {
