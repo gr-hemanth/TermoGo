@@ -66,9 +66,13 @@ function sessionSummary(s) {
   };
 }
 
-function spawnShell() {
+function spawnShell(title = '') {
   if (process.platform === 'win32') {
-    return { file: process.env.ComSpec || 'powershell.exe', args: [] };
+    const lower = (title || '').toLowerCase();
+    if (lower.includes('cmd')) {
+      return { file: process.env.ComSpec || 'cmd.exe', args: [] };
+    }
+    return { file: 'powershell.exe', args: ['-NoLogo'] };
   }
   return { file: process.env.SHELL || '/bin/bash', args: [] };
 }
@@ -295,6 +299,11 @@ function getLastInteraction(session) {
 function handleSessionInput(session, data) {
   if (!data || typeof data !== 'string') return;
 
+  // Ignore terminal mouse reporting escape codes from command buffer tracking
+  if (data.startsWith('\x1b[<')) {
+    return;
+  }
+
   // Ctrl+C or Ctrl+Z: current command is cancelled
   if (data.includes('\x03') || data.includes('\x1a')) {
     session.awaitingCommandStart = true;
@@ -323,7 +332,7 @@ function handleSessionInput(session, data) {
 
 function createSession(title = 'Terminal') {
   const id = crypto.randomUUID();
-  const shell = spawnShell();
+  const shell = spawnShell(title);
   const term = pty.spawn(shell.file, shell.args, {
     name: 'xterm-256color',
     cols: 120,

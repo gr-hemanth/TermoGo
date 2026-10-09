@@ -44,52 +44,56 @@
 
     /* Top Navigation Bar */
     header {
-      height: 48px;
-      min-height: 48px;
-      background: #0f1217;
+      height: 40px;
+      min-height: 40px;
+      background: #0d1015;
       border-bottom: 1px solid var(--card-border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 12px;
+      padding: 0 10px;
       z-index: 10;
     }
     .header-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      min-width: 0;
     }
     .brand {
       font-weight: 700;
-      font-size: 15px;
+      font-size: 14px;
       letter-spacing: -0.3px;
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
+      white-space: nowrap;
     }
     .brand-icon {
       color: var(--accent);
       font-weight: 800;
-      font-size: 16px;
+      font-size: 15px;
     }
     .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      gap: 5px;
+      font-size: 11px;
       font-weight: 500;
       color: var(--text-muted);
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 12px;
-      padding: 2px 8px;
+      padding: 2px 7px;
+      white-space: nowrap;
     }
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--yellow-dot);
+      flex-shrink: 0;
     }
     .status-dot.connected { background: var(--green-dot); }
     .status-dot.disconnected { background: var(--red-dot); }
@@ -98,21 +102,24 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 0;
     }
     .btn {
       background: var(--btn-bg);
       color: var(--text);
       border: 1px solid var(--card-border);
       border-radius: 6px;
-      padding: 6px 10px;
+      padding: 5px 9px;
       font-size: 12px;
       font-weight: 500;
+      min-height: 28px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       transition: background 0.15s ease, border-color 0.15s ease;
+      white-space: nowrap;
     }
     .btn:active { background: var(--btn-active); }
     .btn-primary {
@@ -122,18 +129,10 @@
     }
     .btn-primary:active { background: #2ea043; }
 
-    /* On-Screen Diagnostic Bar */
-    #debug-bar {
-      background: #12161d;
-      color: #58a6ff;
-      font-size: 11px;
-      padding: 3px 10px;
-      font-family: Consolas, monospace;
-      border-bottom: 1px solid #21262d;
-      overflow-x: auto;
-      white-space: nowrap;
-      user-select: text;
-      -webkit-user-select: text;
+    @media (max-width: 350px) {
+      .brand-text { display: none; }
+      .header-actions { gap: 4px; }
+      .btn { padding: 4px 6px; font-size: 11px; }
     }
 
     /* Main Container Views */
@@ -307,32 +306,66 @@
 
     /* Active Terminal View */
     .terminal-subbar {
-      height: 36px;
-      min-height: 36px;
-      background: #12151b;
+      height: 32px;
+      min-height: 32px;
+      background: #11141a;
       border-bottom: 1px solid var(--card-border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 10px;
-      font-size: 13px;
+      font-size: 12px;
     }
     .current-session-label {
       font-weight: 600;
-      color: #fff;
-      display: flex;
+      color: #e6edf3;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
       cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .session-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green-dot);
+      flex-shrink: 0;
+    }
+    .session-title-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .current-session-label:hover { color: var(--accent); }
+    .btn-reconnect {
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      min-height: 24px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn-reconnect:active {
+      color: #fff;
+      background: #21262d;
+    }
     #terminal-container {
       flex: 1;
       width: 100%;
       min-height: 0;
       position: relative;
       background: #000;
-      padding: 4px;
+      padding: 2px 4px;
       user-select: text;
       -webkit-user-select: text;
     }
@@ -349,12 +382,12 @@
 
     /* Mobile Keyboard Accessory Toolbar */
     .mobile-toolbar {
-      background: #12151b;
+      background: #11141a;
       border-top: 1px solid var(--card-border);
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 7px 10px;
+      padding: 7px 12px;
       overflow-x: auto;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
@@ -363,57 +396,65 @@
       flex-shrink: 0;
       width: 100%;
       box-sizing: border-box;
+      position: relative;
+      z-index: 20;
     }
     .mobile-toolbar::-webkit-scrollbar { display: none; }
-    .tool-key {
+    .tool-key, .tool-btn {
       background: #21262d;
       color: var(--text);
       border: 1px solid #30363d;
       border-radius: 8px;
-      padding: 8px 12px;
+      padding: 0;
       font-size: 13px;
       font-weight: 600;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
+      touch-action: manipulation;
       white-space: nowrap;
+      width: 44px;
+      height: 40px;
       min-width: 44px;
       min-height: 40px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      transition: background 0.1s ease, transform 0.05s ease;
+      transition: background 0.1s ease, border-color 0.1s ease, transform 0.05s ease;
       flex-shrink: 0;
     }
-    .tool-key:active {
+    .tool-btn svg, .popover-btn svg {
+      pointer-events: none;
+    }
+    .tool-key:active, .tool-btn:active {
       background: #30363d;
       transform: scale(0.96);
     }
-    .tool-key-stop {
-      background: #da3633;
-      border: 1px solid #f85149;
+    .tool-key-stop, .tool-btn-stop {
+      background: #21262d;
+      border: 1px solid #30363d;
       color: #ffffff;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      padding: 8px 14px;
     }
-    .tool-key-stop:active {
-      background: #b62324;
-      border-color: #da3633;
+    .tool-key-stop:active, .tool-btn-stop:active {
+      background: #3b2224;
+      border-color: #f85149;
       transform: scale(0.96);
     }
-    .tool-key-copy-last {
+    .tool-key-copy-last, .tool-btn-copy {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #ffffff;
+    }
+    .tool-key-copy-last:active, .tool-btn-copy:active {
+      background: #1c3324;
+      border-color: #2ea043;
+      transform: scale(0.96);
+    }
+    .tool-btn-copy.copied {
       background: #238636;
-      border: 1px solid #2ea043;
-      color: #ffffff;
-      font-weight: 700;
-      padding: 8px 12px;
-    }
-    .tool-key-copy-last:active {
-      background: #2ea043;
-      transform: scale(0.96);
+      border-color: #2ea043;
     }
     .tool-key.active-ctrl {
       background: #1f6feb;
@@ -421,34 +462,511 @@
       color: #ffffff;
       box-shadow: 0 0 6px rgba(47, 129, 247, 0.5);
     }
-    .tool-key-arrow {
-      font-size: 15px;
-      min-width: 42px;
+    .tool-key-arrow, .tool-btn-arrow {
+      color: #e6edf3;
+    }
+    .toolbar-divider {
+      width: 1px;
+      height: 22px;
+      background: #30363d;
+      margin: 0 2px;
+      flex-shrink: 0;
+    }
+    .tool-btn-essentials {
+      color: #e6edf3;
+    }
+    .tool-btn-essentials.active {
+      background: #282e38;
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .tool-key-scroll {
+      font-size: 13px;
+      font-weight: 700;
+      min-width: 44px;
+      min-height: 40px;
+      background: #1c2128;
+      border: 1px solid #30363d;
+      color: #adbac7;
+      transition: opacity 0.15s ease, background 0.1s ease, transform 0.05s ease;
+    }
+    .tool-key-scroll:active {
+      background: #2d333b;
+      transform: scale(0.96);
+    }
+    .tool-key-scroll-bottom {
+      background: #1b2533;
+      border-color: #388bfd;
+      color: #58a6ff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      padding: 8px 12px;
+    }
+    .tool-key-scroll-bottom:active {
+      background: #1f6feb;
+      color: #ffffff;
+      transform: scale(0.96);
+    }
+    .tool-key-scroll.soften {
+      opacity: 0.45;
     }
 
-    /* Paste / Prompt Input Footer */
+    /* Laptop-Style Virtual Keyboard Panel */
+    .virtual-keyboard-panel {
+      position: relative;
+      background: #0d1117;
+      border-top: 1px solid #30363d;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.7);
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      padding: 6px 8px 8px 8px;
+      gap: 4px;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .virtual-keyboard-panel.open {
+      display: flex;
+    }
+    .vk-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #21262d;
+      margin-bottom: 2px;
+    }
+    .vk-header-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .vk-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .vk-modifiers-display {
+      display: flex;
+      gap: 3px;
+    }
+    .vk-mod-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: #1f6feb;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+    .vk-header-tabs {
+      display: flex;
+      gap: 4px;
+    }
+    .vk-tab-btn {
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      cursor: pointer;
+      touch-action: none;
+    }
+    .vk-tab-btn.active {
+      background: #21262d;
+      border-color: #58a6ff;
+      color: #58a6ff;
+    }
+    .vk-close-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .vk-close-btn:hover, .vk-close-btn:active {
+      background: #21262d;
+      color: #fff;
+    }
+    .vk-body {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      width: 100%;
+    }
+    .vk-view {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      width: 100%;
+    }
+    .vk-row {
+      display: flex;
+      gap: 3px;
+      justify-content: center;
+      width: 100%;
+    }
+    .vk-row-center {
+      justify-content: center;
+    }
+    .vk-key {
+      flex: 1;
+      height: 32px;
+      min-width: 0;
+      padding: 0;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      color: #e6edf3;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      touch-action: none;
+      transition: background 0.08s ease, transform 0.05s ease, border-color 0.1s ease;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .vk-key:active, .vk-key.pressed {
+      background: #30363d;
+      transform: scale(0.95);
+    }
+    .vk-key.active-mod {
+      background: #1f6feb;
+      border-color: #58a6ff;
+      color: #ffffff;
+      box-shadow: 0 0 6px rgba(47, 129, 247, 0.5);
+    }
+    .vk-key-space {
+      flex: 3.5;
+    }
+    .vk-key-enter, .vk-key-shift, .vk-key-bksp, .vk-key-tab, .vk-key-caps {
+      flex: 1.4;
+      font-size: 11px;
+    }
+    .vk-key-ctrl, .vk-key-alt, .vk-key-meta, .vk-key-esc {
+      flex: 1.1;
+      font-size: 11px;
+    }
+    .vk-key-fn, .vk-key-cmd, .vk-key-combo {
+      font-size: 11px;
+    }
+
+    /* Dual-Mode Mouse & Touchpad Controls */
+    .touchpad-mode-switcher {
+      display: flex;
+      gap: 4px;
+      background: #111418;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 2px;
+      margin-bottom: 2px;
+    }
+    .touchpad-mode-btn {
+      flex: 1;
+      height: 26px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: #8b949e;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+    .touchpad-mode-btn.active {
+      background: #21262d;
+      color: var(--accent);
+      border: 1px solid #30363d;
+    }
+    .touchpad-view-select {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .selection-status-text {
+      font-size: 11px;
+      color: #8b949e;
+      text-align: center;
+      padding: 2px;
+      font-family: monospace;
+      min-height: 18px;
+    }
+    .touchpad-btn.mouse-btn-primary {
+      background: #1f6feb;
+      border-color: #388bfd;
+      color: #fff;
+    }
+
+    /* Essentials Floating Popover Menu */
+    .essentials-popover {
+      position: absolute;
+      bottom: 104px;
+      right: 12px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 8px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      z-index: 50;
+      animation: popoverFadeIn 0.15s ease-out;
+    }
+    .essentials-popover.open {
+      display: flex;
+    }
+    @keyframes popoverFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .essentials-popover::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      right: 18px;
+      width: 10px;
+      height: 10px;
+      background: #161b22;
+      border-right: 1px solid #30363d;
+      border-bottom: 1px solid #30363d;
+      transform: rotate(45deg);
+    }
+    .popover-btn {
+      width: 44px;
+      height: 42px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.1s ease, border-color 0.15s ease, transform 0.05s ease;
+    }
+    .popover-btn:active {
+      background: #30363d;
+      transform: scale(0.96);
+    }
+    .popover-btn.active {
+      background: #1f6feb;
+      border-color: #58a6ff;
+      color: #fff;
+    }
+
+    /* Floating Touchpad Overlay */
+    .touchpad-overlay {
+      position: absolute;
+      bottom: 96px;
+      right: 12px;
+      width: 210px;
+      background: rgba(22, 27, 34, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 45;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    .touchpad-overlay.open {
+      display: flex;
+    }
+    .touchpad-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .touchpad-coords {
+      font-family: monospace;
+      font-size: 10px;
+      color: var(--accent);
+      background: #111418;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #21262d;
+    }
+    .touchpad-close-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .touchpad-close-btn:hover, .touchpad-close-btn:active {
+      color: #fff;
+      background: #30363d;
+    }
+    .touchpad-surface {
+      width: 100%;
+      height: 80px;
+      background: #0b0d10;
+      border: 1px dashed #30363d;
+      border-radius: 8px;
+      position: relative;
+      cursor: crosshair;
+      touch-action: none;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .touchpad-surface:active {
+      border-color: var(--accent);
+    }
+    .touchpad-pointer {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(47, 129, 247, 0.8);
+      border: 2px solid #fff;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px rgba(47, 129, 247, 0.6);
+      display: none;
+    }
+    .touchpad-surface-hint {
+      font-size: 10px;
+      color: #484f58;
+      pointer-events: none;
+    }
+    .touchpad-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .touchpad-btn {
+      flex: 1;
+      height: 32px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.1s ease, border-color 0.1s ease;
+    }
+    .touchpad-btn:active, .touchpad-btn.pressed {
+      background: #1f6feb;
+      border-color: #58a6ff;
+      color: #fff;
+    }
+    .touchpad-btn-scroll {
+      font-size: 11px;
+      padding: 0 6px;
+    }
+    /* Terminal virtual cell cursor indicator */
+    .terminal-cell-cursor {
+      position: absolute;
+      border: 2px solid rgba(47, 129, 247, 0.85);
+      background: rgba(47, 129, 247, 0.2);
+      pointer-events: none;
+      z-index: 15;
+      display: none;
+      border-radius: 2px;
+      box-sizing: border-box;
+    }
+
+    /* Unified Mobile Command Input Bar */
     .terminal-footer {
       display: flex;
+      align-items: center;
       gap: 8px;
-      padding: 6px 8px;
+      padding: 6px 10px;
       padding-bottom: calc(6px + var(--safe-bottom));
-      background: #0f1217;
+      background: #0d1015;
       border-top: 1px solid var(--card-border);
       flex-shrink: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
     .input-box {
       flex: 1;
       min-width: 0;
+      height: 38px;
+      min-height: 38px;
+      max-height: 120px;
       background: #161b22;
       border: 1px solid #30363d;
-      border-radius: 6px;
-      color: #fff;
-      padding: 8px 10px;
+      border-radius: 7px;
+      color: #ffffff;
+      padding: 9px 12px;
       font-size: 14px;
-      font-family: monospace;
+      font-family: Consolas, -apple-system, monospace;
       outline: none;
+      box-sizing: border-box;
+      resize: none;
+      line-height: 1.3;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-    .input-box:focus { border-color: var(--accent); }
+    .input-box:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(47, 129, 247, 0.2);
+    }
+    .input-box::placeholder {
+      color: #6e7681;
+    }
+    .btn-send-prompt {
+      height: 38px;
+      min-width: 60px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      background: #f0f6fc;
+      border: 1px solid #d0d7de;
+      border-radius: 7px;
+      color: #0b0d10;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s ease, transform 0.05s ease;
+    }
+    .btn-send-prompt:active {
+      background: #e1e4e8;
+      transform: scale(0.96);
+    }
 
     /* Modals */
     .modal-overlay {
@@ -535,7 +1053,7 @@
 <header>
   <div class="header-left">
     <div class="brand">
-      <span class="brand-icon">⚡</span> TermBridge
+      <span class="brand-icon">⚡</span><span class="brand-text"> TermBridge</span>
     </div>
     <div class="status-badge">
       <span id="status-dot" class="status-dot"></span>
@@ -548,9 +1066,6 @@
   </div>
 </header>
 
-<!-- Diagnostic Status Strip -->
-<div id="debug-bar">[INIT] Starting application...</div>
-
 <!-- View 1: Terminals List -->
 <div id="view-terminals">
   <div class="section-title">TERMINALS</div>
@@ -562,35 +1077,301 @@
 <!-- View 2: Active Terminal Screen -->
 <div id="view-terminal">
   <div class="terminal-subbar">
-    <div id="current-term-name" class="current-session-label">
-      <span>PowerShell</span> <small style="color:var(--text-muted)">◀ Terminals</small>
+    <div id="current-term-name" class="current-session-label" title="Switch terminals">
+      <span class="session-dot"></span>
+      <span id="current-term-title" class="session-title-text">PowerShell</span>
     </div>
-    <div style="display:flex; gap:6px; align-items:center;">
-      <button id="btn-copy-last" class="btn btn-primary" style="padding:4px 10px; font-size:12px; font-weight:700; background:#238636; border-color:#2ea043; color:#fff;">📋 COPY LAST</button>
-      <button id="btn-reconnect" class="btn" style="padding:4px 8px; font-size:11px;">Reconnect</button>
+    <div style="display:flex; align-items:center;">
+      <button id="btn-reconnect" class="btn btn-reconnect">Reconnect</button>
     </div>
   </div>
 
   <div id="terminal-container"></div>
 
-  <!-- Mobile Touch Key Helper Bar -->
+  <!-- Laptop-Style Virtual Keyboard Panel -->
+  <div class="virtual-keyboard-panel" id="virtual-keyboard-panel" role="region" aria-label="Virtual Keyboard">
+    <!-- Keyboard Header: Title, Active Modifiers, Tab Switcher, Close -->
+    <div class="vk-header">
+      <div class="vk-header-left">
+        <span class="vk-title">⌨ Keyboard</span>
+        <div class="vk-modifiers-display" id="vk-modifiers-display">
+          <span class="vk-mod-badge" id="vk-badge-ctrl" style="display:none;">CTRL</span>
+          <span class="vk-mod-badge" id="vk-badge-shift" style="display:none;">SHIFT</span>
+          <span class="vk-mod-badge" id="vk-badge-alt" style="display:none;">ALT</span>
+          <span class="vk-mod-badge" id="vk-badge-caps" style="display:none;">CAPS</span>
+        </div>
+      </div>
+      <div class="vk-header-tabs">
+        <button class="vk-tab-btn active" id="btn-vk-tab-main" type="button" tabindex="-1">Main</button>
+        <button class="vk-tab-btn" id="btn-vk-tab-nav" type="button" tabindex="-1">Nav / Fn</button>
+        <button class="vk-tab-btn" id="btn-vk-tab-shortcuts" type="button" tabindex="-1">Shortcuts</button>
+      </div>
+      <button class="vk-close-btn" id="btn-close-vk" type="button" tabindex="-1" title="Close Keyboard" aria-label="Close Keyboard">✕</button>
+    </div>
+
+    <!-- Keyboard Body: Tab Views -->
+    <div class="vk-body">
+      <!-- View 1: Main QWERTY, Numbers, Punctuation & Modifiers -->
+      <div class="vk-view" id="vk-view-main">
+        <!-- Row 1: Esc, Number row with symbols, Backspace -->
+        <div class="vk-row">
+          <button class="vk-key vk-key-esc" data-key="Escape" data-seq="&#x1b;" type="button" tabindex="-1">Esc</button>
+          <button class="vk-key vk-key-char" data-base="1" data-shift="!" type="button" tabindex="-1">1</button>
+          <button class="vk-key vk-key-char" data-base="2" data-shift="@" type="button" tabindex="-1">2</button>
+          <button class="vk-key vk-key-char" data-base="3" data-shift="#" type="button" tabindex="-1">3</button>
+          <button class="vk-key vk-key-char" data-base="4" data-shift="$" type="button" tabindex="-1">4</button>
+          <button class="vk-key vk-key-char" data-base="5" data-shift="%" type="button" tabindex="-1">5</button>
+          <button class="vk-key vk-key-char" data-base="6" data-shift="^" type="button" tabindex="-1">6</button>
+          <button class="vk-key vk-key-char" data-base="7" data-shift="&amp;" type="button" tabindex="-1">7</button>
+          <button class="vk-key vk-key-char" data-base="8" data-shift="*" type="button" tabindex="-1">8</button>
+          <button class="vk-key vk-key-char" data-base="9" data-shift="(" type="button" tabindex="-1">9</button>
+          <button class="vk-key vk-key-char" data-base="0" data-shift=")" type="button" tabindex="-1">0</button>
+          <button class="vk-key vk-key-char" data-base="-" data-shift="_" type="button" tabindex="-1">-</button>
+          <button class="vk-key vk-key-char" data-base="=" data-shift="+" type="button" tabindex="-1">=</button>
+          <button class="vk-key vk-key-bksp" data-key="Backspace" data-seq="&#x7f;" type="button" tabindex="-1">⌫</button>
+        </div>
+        <!-- Row 2: Tab, QWERTY row 1, brackets -->
+        <div class="vk-row">
+          <button class="vk-key vk-key-tab" data-key="Tab" data-seq="&#x09;" type="button" tabindex="-1">Tab</button>
+          <button class="vk-key vk-key-char" data-base="q" data-shift="Q" type="button" tabindex="-1">q</button>
+          <button class="vk-key vk-key-char" data-base="w" data-shift="W" type="button" tabindex="-1">w</button>
+          <button class="vk-key vk-key-char" data-base="e" data-shift="E" type="button" tabindex="-1">e</button>
+          <button class="vk-key vk-key-char" data-base="r" data-shift="R" type="button" tabindex="-1">r</button>
+          <button class="vk-key vk-key-char" data-base="t" data-shift="T" type="button" tabindex="-1">t</button>
+          <button class="vk-key vk-key-char" data-base="y" data-shift="Y" type="button" tabindex="-1">y</button>
+          <button class="vk-key vk-key-char" data-base="u" data-shift="U" type="button" tabindex="-1">u</button>
+          <button class="vk-key vk-key-char" data-base="i" data-shift="I" type="button" tabindex="-1">i</button>
+          <button class="vk-key vk-key-char" data-base="o" data-shift="O" type="button" tabindex="-1">o</button>
+          <button class="vk-key vk-key-char" data-base="p" data-shift="P" type="button" tabindex="-1">p</button>
+          <button class="vk-key vk-key-char" data-base="[" data-shift="{" type="button" tabindex="-1">[</button>
+          <button class="vk-key vk-key-char" data-base="]" data-shift="}" type="button" tabindex="-1">]</button>
+          <button class="vk-key vk-key-char" data-base="\" data-shift="|" type="button" tabindex="-1">\</button>
+        </div>
+        <!-- Row 3: Caps, QWERTY row 2, Enter -->
+        <div class="vk-row">
+          <button class="vk-key vk-key-caps" id="vk-key-caps" data-key="CapsLock" type="button" tabindex="-1">Caps</button>
+          <button class="vk-key vk-key-char" data-base="a" data-shift="A" type="button" tabindex="-1">a</button>
+          <button class="vk-key vk-key-char" data-base="s" data-shift="S" type="button" tabindex="-1">s</button>
+          <button class="vk-key vk-key-char" data-base="d" data-shift="D" type="button" tabindex="-1">d</button>
+          <button class="vk-key vk-key-char" data-base="f" data-shift="F" type="button" tabindex="-1">f</button>
+          <button class="vk-key vk-key-char" data-base="g" data-shift="G" type="button" tabindex="-1">g</button>
+          <button class="vk-key vk-key-char" data-base="h" data-shift="H" type="button" tabindex="-1">h</button>
+          <button class="vk-key vk-key-char" data-base="j" data-shift="J" type="button" tabindex="-1">j</button>
+          <button class="vk-key vk-key-char" data-base="k" data-shift="K" type="button" tabindex="-1">k</button>
+          <button class="vk-key vk-key-char" data-base="l" data-shift="L" type="button" tabindex="-1">l</button>
+          <button class="vk-key vk-key-char" data-base=";" data-shift=":" type="button" tabindex="-1">;</button>
+          <button class="vk-key vk-key-char" data-base="'" data-shift="&quot;" type="button" tabindex="-1">'</button>
+          <button class="vk-key vk-key-enter" data-key="Enter" data-seq="&#x0d;" type="button" tabindex="-1">↵ Enter</button>
+        </div>
+        <!-- Row 4: Shift, QWERTY row 3, Up Arrow -->
+        <div class="vk-row">
+          <button class="vk-key vk-key-shift" id="vk-key-shift" data-key="Shift" type="button" tabindex="-1">⇧ Shift</button>
+          <button class="vk-key vk-key-char" data-base="z" data-shift="Z" type="button" tabindex="-1">z</button>
+          <button class="vk-key vk-key-char" data-base="x" data-shift="X" type="button" tabindex="-1">x</button>
+          <button class="vk-key vk-key-char" data-base="c" data-shift="C" type="button" tabindex="-1">c</button>
+          <button class="vk-key vk-key-char" data-base="v" data-shift="V" type="button" tabindex="-1">v</button>
+          <button class="vk-key vk-key-char" data-base="b" data-shift="B" type="button" tabindex="-1">b</button>
+          <button class="vk-key vk-key-char" data-base="n" data-shift="N" type="button" tabindex="-1">n</button>
+          <button class="vk-key vk-key-char" data-base="m" data-shift="M" type="button" tabindex="-1">m</button>
+          <button class="vk-key vk-key-char" data-base="," data-shift="&lt;" type="button" tabindex="-1">,</button>
+          <button class="vk-key vk-key-char" data-base="." data-shift="&gt;" type="button" tabindex="-1">.</button>
+          <button class="vk-key vk-key-char" data-base="/" data-shift="?" type="button" tabindex="-1">/</button>
+          <button class="vk-key vk-key-arrow" data-key="ArrowUp" data-seq="&#x1b;[A" type="button" tabindex="-1">▲</button>
+        </div>
+        <!-- Row 5: Ctrl, Alt, Win, Space, Navigation Arrows -->
+        <div class="vk-row">
+          <button class="vk-key vk-key-ctrl" id="vk-key-ctrl" data-key="Control" type="button" tabindex="-1">Ctrl</button>
+          <button class="vk-key vk-key-alt" id="vk-key-alt" data-key="Alt" type="button" tabindex="-1">Alt</button>
+          <button class="vk-key vk-key-meta" id="vk-key-meta" data-key="Meta" type="button" tabindex="-1">⊞ Win</button>
+          <button class="vk-key vk-key-space" data-key=" " data-seq=" " type="button" tabindex="-1">Space</button>
+          <button class="vk-key vk-key-arrow" data-key="ArrowLeft" data-seq="&#x1b;[D" type="button" tabindex="-1">◀</button>
+          <button class="vk-key vk-key-arrow" data-key="ArrowDown" data-seq="&#x1b;[B" type="button" tabindex="-1">▼</button>
+          <button class="vk-key vk-key-arrow" data-key="ArrowRight" data-seq="&#x1b;[C" type="button" tabindex="-1">▶</button>
+        </div>
+      </div>
+
+      <!-- View 2: Navigation & Function Keys (F1-F12, Home, End, PgUp, PgDn, Ins, Del) -->
+      <div class="vk-view" id="vk-view-nav" style="display:none;">
+        <div class="vk-row">
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;OP" type="button" tabindex="-1">F1</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;OQ" type="button" tabindex="-1">F2</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;OR" type="button" tabindex="-1">F3</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;OS" type="button" tabindex="-1">F4</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;[15~" type="button" tabindex="-1">F5</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;[17~" type="button" tabindex="-1">F6</button>
+        </div>
+        <div class="vk-row">
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;[18~" type="button" tabindex="-1">F7</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;[19~" type="button" tabindex="-1">F8</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;[20~" type="button" tabindex="-1">F9</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;[21~" type="button" tabindex="-1">F10</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;[23~" type="button" tabindex="-1">F11</button>
+          <button class="vk-key vk-key-fn" data-seq="&#x1b;[24~" type="button" tabindex="-1">F12</button>
+        </div>
+        <div class="vk-row">
+          <button class="vk-key" data-seq="&#x1b;[2~" type="button" tabindex="-1">Ins</button>
+          <button class="vk-key" data-seq="&#x1b;[3~" type="button" tabindex="-1">Del</button>
+          <button class="vk-key" data-seq="&#x1b;[H" type="button" tabindex="-1">Home</button>
+          <button class="vk-key" data-seq="&#x1b;[F" type="button" tabindex="-1">End</button>
+          <button class="vk-key" data-seq="&#x1b;[5~" type="button" tabindex="-1">PgUp</button>
+          <button class="vk-key" data-seq="&#x1b;[6~" type="button" tabindex="-1">PgDn</button>
+        </div>
+        <div class="vk-row">
+          <button class="vk-key" data-seq="&#x09;" type="button" tabindex="-1">Tab</button>
+          <button class="vk-key" data-seq="&#x1b;" type="button" tabindex="-1">Esc</button>
+          <button class="vk-key vk-key-arrow" data-key="ArrowUp" data-seq="&#x1b;[A" type="button" tabindex="-1">▲ Up</button>
+          <button class="vk-key" data-seq="&#x0d;" type="button" tabindex="-1">↵ Enter</button>
+        </div>
+        <div class="vk-row">
+          <button class="vk-key vk-key-arrow" data-key="ArrowLeft" data-seq="&#x1b;[D" type="button" tabindex="-1">◀ Left</button>
+          <button class="vk-key vk-key-arrow" data-key="ArrowDown" data-seq="&#x1b;[B" type="button" tabindex="-1">▼ Down</button>
+          <button class="vk-key vk-key-arrow" data-key="ArrowRight" data-seq="&#x1b;[C" type="button" tabindex="-1">▶ Right</button>
+        </div>
+      </div>
+
+      <!-- View 3: Terminal Control Sequences & Shortcuts -->
+      <div class="vk-view" id="vk-view-shortcuts" style="display:none;">
+        <div class="vk-row">
+          <button class="vk-key vk-key-cmd" data-seq="&#x03;" title="Ctrl+C (SIGINT)" type="button" tabindex="-1">Ctrl+C</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x04;" title="Ctrl+D (EOF/Exit)" type="button" tabindex="-1">Ctrl+D</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x1a;" title="Ctrl+Z (SIGTSTP)" type="button" tabindex="-1">Ctrl+Z</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x0c;" title="Ctrl+L (Clear Screen)" type="button" tabindex="-1">Ctrl+L</button>
+        </div>
+        <div class="vk-row">
+          <button class="vk-key vk-key-cmd" data-seq="&#x01;" title="Ctrl+A (Start of Line)" type="button" tabindex="-1">Ctrl+A</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x05;" title="Ctrl+E (End of Line)" type="button" tabindex="-1">Ctrl+E</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x0b;" title="Ctrl+K (Kill to End)" type="button" tabindex="-1">Ctrl+K</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x15;" title="Ctrl+U (Erase Line)" type="button" tabindex="-1">Ctrl+U</button>
+        </div>
+        <div class="vk-row">
+          <button class="vk-key vk-key-cmd" data-seq="&#x17;" title="Ctrl+W (Delete Word)" type="button" tabindex="-1">Ctrl+W</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x12;" title="Ctrl+R (History Search)" type="button" tabindex="-1">Ctrl+R</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x09;" title="Tab Completion" type="button" tabindex="-1">Tab Complete</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x1b;" title="Escape" type="button" tabindex="-1">Esc</button>
+        </div>
+        <div class="vk-row">
+          <button class="vk-key vk-key-combo" id="vk-combo-ctrl-shift-c" type="button" tabindex="-1">Ctrl+Shift+C</button>
+          <button class="vk-key vk-key-combo" id="vk-combo-ctrl-shift-v" type="button" tabindex="-1">Ctrl+Shift+V</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x1b;[1;5A" title="Ctrl+Up" type="button" tabindex="-1">Ctrl+▲</button>
+          <button class="vk-key vk-key-cmd" data-seq="&#x1b;[1;5B" title="Ctrl+Down" type="button" tabindex="-1">Ctrl+▼</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Touch Key Helper Bar (Mockup Compliant) -->
   <div class="mobile-toolbar">
-    <button class="tool-key tool-key-stop" id="key-stop" title="Stop running command (Ctrl+C)" aria-label="Stop running command">■ STOP</button>
-    <button class="tool-key tool-key-copy-last" id="key-copy-last" title="Copy last command output" aria-label="Copy last interaction">📋 COPY LAST</button>
-    <button class="tool-key" id="key-esc">ESC</button>
-    <button class="tool-key" id="key-tab">TAB</button>
-    <button class="tool-key" id="key-ctrl">CTRL</button>
-    <button class="tool-key tool-key-arrow" id="key-up" aria-label="Up">▲</button>
-    <button class="tool-key tool-key-arrow" id="key-down" aria-label="Down">▼</button>
-    <button class="tool-key tool-key-arrow" id="key-left" aria-label="Left">◀</button>
-    <button class="tool-key tool-key-arrow" id="key-right" aria-label="Right">▶</button>
-    <button class="tool-key" id="key-copy" title="Copy selected text">SEL</button>
+    <button class="tool-btn tool-btn-stop tool-key-stop" id="key-stop" type="button" tabindex="-1" title="■ STOP" aria-label="STOP">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2.5" fill="#f85149"/></svg>
+    </button>
+    <button class="tool-btn tool-btn-copy tool-key-copy-last" id="key-copy-last" type="button" tabindex="-1" title="📋 COPY LAST" aria-label="COPY LAST">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </button>
+    <button class="tool-btn tool-btn-arrow tool-key-arrow" id="key-up" type="button" tabindex="-1" title="Up Arrow" aria-label="Up">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V5M5 12l7-7 7 7"/>
+      </svg>
+    </button>
+    <button class="tool-btn tool-btn-arrow tool-key-arrow" id="key-down" type="button" tabindex="-1" title="Down Arrow" aria-label="Down">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M19 12l-7 7-7-7"/>
+      </svg>
+    </button>
+    <span class="toolbar-divider"></span>
+    <button class="tool-btn tool-btn-essentials" id="btn-essentials" type="button" tabindex="-1" title="Essentials" aria-label="Essentials" aria-haspopup="true" aria-expanded="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Floating Essentials Popover (Keyboard & Mouse) -->
+  <div class="essentials-popover" id="essentials-popover" role="menu">
+    <button class="popover-btn" id="btn-essentials-keyboard" type="button" tabindex="-1" title="Keyboard" aria-label="Keyboard" role="menuitem">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2.5"></rect>
+        <line x1="6" y1="8" x2="6.01" y2="8"></line>
+        <line x1="10" y1="8" x2="10.01" y2="8"></line>
+        <line x1="14" y1="8" x2="14.01" y2="8"></line>
+        <line x1="18" y1="8" x2="18.01" y2="8"></line>
+        <line x1="6" y1="12" x2="6.01" y2="12"></line>
+        <line x1="10" y1="12" x2="10.01" y2="12"></line>
+        <line x1="14" y1="12" x2="14.01" y2="12"></line>
+        <line x1="18" y1="12" x2="18.01" y2="12"></line>
+        <line x1="7" y1="16" x2="17" y2="16"></line>
+      </svg>
+    </button>
+    <button class="popover-btn" id="btn-essentials-mouse" type="button" tabindex="-1" title="Mouse" aria-label="Mouse" role="menuitem">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="7"></rect>
+        <line x1="12" y1="6" x2="12" y2="10"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Touchpad & Mouse Control Overlay (Select/Copy + Pointer Modes) -->
+  <div class="touchpad-overlay" id="touchpad-overlay">
+    <div class="touchpad-header">
+      <div class="touchpad-mode-switcher">
+        <button class="touchpad-mode-btn active" id="btn-mode-select" type="button" tabindex="-1">📋 Select</button>
+        <button class="touchpad-mode-btn" id="btn-mode-pointer" type="button" tabindex="-1">🖱 Pointer</button>
+      </div>
+      <button class="touchpad-close-btn" id="btn-close-touchpad" title="Exit Mouse Mode" aria-label="Close Touchpad">✕</button>
+    </div>
+
+    <!-- Mode 1: Select / Copy Mode View -->
+    <div class="touchpad-view-select" id="touchpad-view-select">
+      <div class="selection-status-text" id="selection-status-text">Drag on terminal to select text</div>
+      <div class="touchpad-actions">
+        <button class="touchpad-btn mouse-btn-primary" id="btn-sel-copy" type="button" tabindex="-1">📋 Copy</button>
+        <button class="touchpad-btn" id="btn-sel-all" type="button" tabindex="-1">Select All</button>
+        <button class="touchpad-btn" id="btn-sel-clear" type="button" tabindex="-1">Clear</button>
+      </div>
+    </div>
+
+    <!-- Mode 2: Pointer Mode View -->
+    <div class="touchpad-view-pointer" id="touchpad-view-pointer" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <span style="font-size:10px; color:#8b949e;">Coords:</span>
+        <span class="touchpad-coords" id="touchpad-coords">1, 1</span>
+      </div>
+      <div class="touchpad-surface" id="touchpad-surface">
+        <div class="touchpad-pointer" id="touchpad-pointer"></div>
+        <span class="touchpad-surface-hint">Touch &amp; Drag</span>
+      </div>
+      <div class="touchpad-actions" style="margin-top:6px;">
+        <button class="touchpad-btn" id="touchpad-btn-left" type="button" tabindex="-1" title="Left Click">L</button>
+        <button class="touchpad-btn" id="touchpad-btn-right" type="button" tabindex="-1" title="Right Click">R</button>
+        <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll" id="btn-scroll-up" type="button" tabindex="-1" title="Scroll Up">▲</button>
+        <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll" id="btn-scroll-down" type="button" tabindex="-1" title="Scroll Down">▼</button>
+        <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll-bottom" id="btn-scroll-bottom" type="button" tabindex="-1" title="Scroll to Bottom" style="display:none;">⇣</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Virtual Terminal Pointer Cursor Element -->
+  <div class="terminal-cell-cursor" id="terminal-cell-cursor"></div>
+
+  <!-- Hidden auxiliary controls preserved for test/shortcut compatibility -->
+  <div id="auxiliary-controls" style="display:none;" aria-hidden="true">
+    <button id="key-esc">ESC</button>
+    <button id="key-tab">TAB</button>
+    <button id="key-ctrl">CTRL</button>
+    <button id="key-copy">SEL</button>
+    <button id="key-left">◀</button>
+    <button id="key-right">▶</button>
   </div>
 
   <!-- Paste / Text Command Footer -->
   <div class="terminal-footer">
-    <input id="prompt-input" class="input-box" placeholder="Type or paste command…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-    <button id="btn-send-prompt" class="btn btn-primary">Send</button>
+    <textarea id="prompt-input" class="input-box" placeholder="Paste a prompt here..." rows="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+    <button id="btn-send-prompt" class="btn btn-primary btn-send-prompt">SEND</button>
   </div>
 </div>
 
@@ -696,6 +1477,9 @@
   // Mobile Key Buttons
   const keyStop = document.getElementById('key-stop');
   const keyCopyLast = document.getElementById('key-copy-last');
+  const btnScrollUp = document.getElementById('btn-scroll-up');
+  const btnScrollDown = document.getElementById('btn-scroll-down');
+  const btnScrollBottom = document.getElementById('btn-scroll-bottom');
   const keyEsc = document.getElementById('key-esc');
   const keyTab = document.getElementById('key-tab');
   const keyCtrl = document.getElementById('key-ctrl');
@@ -737,6 +1521,9 @@
       term.loadAddon(fit);
     }
     term.open(document.getElementById('terminal-container'));
+    term.onScroll(() => {
+      updateScrollButtonState();
+    });
   } else {
     logDebug('INIT_ERROR', 'Terminal bundle not loaded');
   }
@@ -954,7 +1741,13 @@
     }
     currentSessionId = id;
     currentSessionTitle = title || 'Terminal';
-    currentTermName.querySelector('span').textContent = currentSessionTitle;
+    const titleEl = document.getElementById('current-term-title') || currentTermName.querySelector('.session-title-text');
+    if (titleEl) {
+      titleEl.textContent = currentSessionTitle;
+    } else {
+      const sp = currentTermName.querySelector('span');
+      if (sp) sp.textContent = currentSessionTitle;
+    }
     showTerminalView();
     connect(id);
   }
@@ -1011,9 +1804,6 @@
         const msg = JSON.parse(e.data);
         if (msg.type === 'ready') {
           logDebug('WS_READY', `PID: ${msg.session?.pid || 'running'}`);
-          if (msg.session?.pid) {
-            currentTermName.querySelector('span').textContent = `${currentSessionTitle} (PID: ${msg.session.pid})`;
-          }
         } else if (msg.type === 'history') {
           if (term) {
             term.reset();
@@ -1022,10 +1812,14 @@
                 try { fit.fit(); } catch {}
               }
               sendResize();
+              updateScrollButtonState();
             });
           }
         } else if (msg.type === 'output') {
-          if (term) term.write(msg.data);
+          if (term) {
+            term.write(msg.data);
+            updateScrollButtonState();
+          }
         } else if (msg.type === 'exit') {
           updateStatus('disconnected', `Exited (${msg.exitCode})`);
           logDebug('WS_EXIT', `exitCode=${msg.exitCode}`);
@@ -1101,47 +1895,962 @@
       if (term) term.focus();
     };
   }
-  keyEsc.onclick = () => { sendInput('\x1b'); if (term) term.focus(); };
-  keyTab.onclick = () => { sendInput('\t'); if (term) term.focus(); };
-  keyCtrl.onclick = () => {
-    ctrlActive = !ctrlActive;
-    keyCtrl.classList.toggle('active-ctrl', ctrlActive);
-  };
-  keyCopy.onclick = async () => {
-    if (!term) return;
-    const selection = term.getSelection();
-    if (selection) {
-      try {
-        await navigator.clipboard.writeText(selection);
-        keyCopy.textContent = 'COPIED!';
-        setTimeout(() => { keyCopy.textContent = 'SEL'; }, 1000);
-      } catch {
-        prompt('Selected text:', selection);
-      }
-    } else {
-      keyCopy.textContent = 'SELECT 1ST';
-      setTimeout(() => { keyCopy.textContent = 'SEL'; }, 1000);
-    }
-  };
-  keyUp.onclick = () => { sendInput('\x1b[A'); if (term) term.focus(); };
-  keyDown.onclick = () => { sendInput('\x1b[B'); if (term) term.focus(); };
-  keyLeft.onclick = () => { sendInput('\x1b[D'); if (term) term.focus(); };
-  keyRight.onclick = () => { sendInput('\x1b[C'); if (term) term.focus(); };
+  // Mobile Viewport Scroll Controls (Local xterm.js viewport navigation - zero PTY side effects)
+  const SCROLL_AMOUNT = 8; // practical mobile scroll increment (8 lines)
 
-  // Prompt / Paste Input Bar
+  function updateScrollButtonState() {
+    if (!term || !term.buffer || !term.buffer.active) return;
+    const b = term.buffer.active;
+    const isAtBottom = b.viewportY >= b.ybase;
+    const isAtTop = b.viewportY <= 0;
+
+    if (btnScrollBottom) btnScrollBottom.classList.toggle('soften', isAtBottom);
+    if (btnScrollDown) btnScrollDown.classList.toggle('soften', isAtBottom);
+    if (btnScrollUp) btnScrollUp.classList.toggle('soften', isAtTop);
+  }
+
+  if (btnScrollUp) {
+    btnScrollUp.onclick = (e) => {
+      e.preventDefault();
+      if (term) {
+        term.scrollLines(-SCROLL_AMOUNT);
+        updateScrollButtonState();
+      }
+    };
+  }
+
+  if (btnScrollDown) {
+    btnScrollDown.onclick = (e) => {
+      e.preventDefault();
+      if (term) {
+        term.scrollLines(SCROLL_AMOUNT);
+        updateScrollButtonState();
+      }
+    };
+  }
+
+  if (btnScrollBottom) {
+    btnScrollBottom.onclick = (e) => {
+      e.preventDefault();
+      if (term) {
+        term.scrollToBottom();
+        updateScrollButtonState();
+      }
+    };
+  }
+
+  if (keyEsc) keyEsc.onclick = () => { sendInput('\x1b'); if (term) term.focus(); };
+  if (keyTab) keyTab.onclick = () => { sendInput('\t'); if (term) term.focus(); };
+  if (keyCtrl) {
+    keyCtrl.onclick = () => {
+      ctrlActive = !ctrlActive;
+      keyCtrl.classList.toggle('active-ctrl', ctrlActive);
+    };
+  }
+  if (keyCopy) {
+    keyCopy.onclick = async () => {
+      if (!term) return;
+      const selection = term.getSelection();
+      if (selection) {
+        try {
+          await navigator.clipboard.writeText(selection);
+          keyCopy.textContent = 'COPIED!';
+          setTimeout(() => { keyCopy.textContent = 'SEL'; }, 1000);
+        } catch {
+          prompt('Selected text:', selection);
+        }
+      } else {
+        keyCopy.textContent = 'SELECT 1ST';
+        setTimeout(() => { keyCopy.textContent = 'SEL'; }, 1000);
+      }
+    };
+  }
+  // --- UP & DOWN Toolbar Arrow Buttons ---
+  let lastUpTapTime = 0;
+  let lastDownTapTime = 0;
+  const ARROW_DEBOUNCE_MS = 150; // Guard against touch+click double firing or rapid bouncing
+
+  function handleKeyUp(e) {
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const now = Date.now();
+    if (now - lastUpTapTime < ARROW_DEBOUNCE_MS) return;
+    lastUpTapTime = now;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      sendInput('\x1b[A');
+      logDebug('KEY_UP', 'Sent UP arrow (\\x1b[A)');
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const now = Date.now();
+    if (now - lastDownTapTime < ARROW_DEBOUNCE_MS) return;
+    lastDownTapTime = now;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      sendInput('\x1b[B');
+      logDebug('KEY_DOWN', 'Sent DOWN arrow (\\x1b[B)');
+    }
+  }
+
+  if (keyUp) {
+    keyUp.addEventListener('pointerdown', handleKeyUp);
+    keyUp.onclick = handleKeyUp;
+  }
+  if (keyDown) {
+    keyDown.addEventListener('pointerdown', handleKeyDown);
+    keyDown.onclick = handleKeyDown;
+  }
+  if (keyLeft) keyLeft.onclick = () => { sendInput('\x1b[D'); };
+  if (keyRight) keyRight.onclick = () => { sendInput('\x1b[C'); };
+
+  // --- Clipboard Helper ---
+  async function copyTextToClipboard(textToCopy) {
+    if (!textToCopy) return false;
+    let copied = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        copied = true;
+      } catch (clipErr) {
+        console.warn('[CLIPBOARD] writeText error, attempting fallback:', clipErr);
+      }
+    }
+    if (!copied) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) {
+        console.warn('[CLIPBOARD] execCommand error:', e);
+      }
+    }
+    return copied;
+  }
+
+  // --- Essentials Menu (Popover: Keyboard & Mouse) ---
+  const btnEssentials = document.getElementById('btn-essentials');
+  const essentialsPopover = document.getElementById('essentials-popover');
+  const btnEssentialsKeyboard = document.getElementById('btn-essentials-keyboard');
+  const btnEssentialsMouse = document.getElementById('btn-essentials-mouse');
+
+  function updateEssentialsPopoverPosition() {
+    if (!essentialsPopover || !btnEssentials || !viewTerminal) return;
+    try {
+      const btnRect = btnEssentials.getBoundingClientRect();
+      const parentRect = viewTerminal.getBoundingClientRect();
+      if (parentRect.width > 0 && parentRect.height > 0) {
+        const bottomOffset = Math.max(70, Math.round(parentRect.bottom - btnRect.top + 8));
+        const rightOffset = Math.max(8, Math.round(parentRect.right - btnRect.right));
+        essentialsPopover.style.bottom = `${bottomOffset}px`;
+        essentialsPopover.style.right = `${rightOffset}px`;
+      }
+    } catch {}
+  }
+
+  function openEssentialsMenu() {
+    if (!essentialsPopover) return;
+    updateEssentialsPopoverPosition();
+    essentialsPopover.classList.add('open');
+    if (btnEssentials) {
+      btnEssentials.classList.add('active');
+      btnEssentials.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  function closeEssentialsMenu() {
+    if (!essentialsPopover) return;
+    essentialsPopover.classList.remove('open');
+    if (btnEssentials) {
+      btnEssentials.classList.remove('active');
+      btnEssentials.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function toggleEssentialsMenu() {
+    if (essentialsPopover && essentialsPopover.classList.contains('open')) {
+      closeEssentialsMenu();
+    } else {
+      openEssentialsMenu();
+    }
+  }
+
+  if (btnEssentials) {
+    btnEssentials.addEventListener('click', (e) => {
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      toggleEssentialsMenu();
+    });
+  }
+
+  // Close popover when tapping outside
+  function handleOutsideEssentialsClick(e) {
+    if (essentialsPopover && essentialsPopover.classList.contains('open')) {
+      if (!essentialsPopover.contains(e.target) && e.target !== btnEssentials && (!btnEssentials || !btnEssentials.contains(e.target))) {
+        closeEssentialsMenu();
+      }
+    }
+  }
+
+  document.addEventListener('click', handleOutsideEssentialsClick);
+  document.addEventListener('pointerdown', handleOutsideEssentialsClick);
+
+  // --- Soft Keyboard Focusing Helper (Preserved for direct calls) ---
+  function focusTerminalKeyboard() {
+    if (!term) return;
+    try {
+      term.focus();
+      if (term.textarea) {
+        term.textarea.setAttribute('autocapitalize', 'none');
+        term.textarea.setAttribute('autocorrect', 'off');
+        term.textarea.setAttribute('autocomplete', 'off');
+        term.textarea.setAttribute('spellcheck', 'false');
+        term.textarea.setAttribute('inputmode', 'text');
+        term.textarea.focus();
+      }
+      term.scrollToBottom();
+    } catch (e) {
+      console.warn('Keyboard focus error:', e);
+    }
+  }
+
+  // --- Laptop-Style Virtual Keyboard Panel ---
+  const virtualKeyboardPanel = document.getElementById('virtual-keyboard-panel');
+  const btnCloseVk = document.getElementById('btn-close-vk');
+  const btnVkTabMain = document.getElementById('btn-vk-tab-main');
+  const btnVkTabNav = document.getElementById('btn-vk-tab-nav');
+  const btnVkTabShortcuts = document.getElementById('btn-vk-tab-shortcuts');
+  const vkViewMain = document.getElementById('vk-view-main');
+  const vkViewNav = document.getElementById('vk-view-nav');
+  const vkViewShortcuts = document.getElementById('vk-view-shortcuts');
+
+  const vkBadgeCtrl = document.getElementById('vk-badge-ctrl');
+  const vkBadgeShift = document.getElementById('vk-badge-shift');
+  const vkBadgeAlt = document.getElementById('vk-badge-alt');
+  const vkBadgeCaps = document.getElementById('vk-badge-caps');
+
+  const vkKeyCtrl = document.getElementById('vk-key-ctrl');
+  const vkKeyShift = document.getElementById('vk-key-shift');
+  const vkKeyAlt = document.getElementById('vk-key-alt');
+  const vkKeyCaps = document.getElementById('vk-key-caps');
+  const vkKeyMeta = document.getElementById('vk-key-meta');
+
+  let vkCtrl = false;
+  let vkShift = false;
+  let vkAlt = false;
+  let vkCaps = false;
+  let vkMeta = false;
+
+  function updateVkModifiers() {
+    if (vkBadgeCtrl) vkBadgeCtrl.style.display = vkCtrl ? 'inline-block' : 'none';
+    if (vkBadgeShift) vkBadgeShift.style.display = vkShift ? 'inline-block' : 'none';
+    if (vkBadgeAlt) vkBadgeAlt.style.display = vkAlt ? 'inline-block' : 'none';
+    if (vkBadgeCaps) vkBadgeCaps.style.display = vkCaps ? 'inline-block' : 'none';
+
+    if (vkKeyCtrl) vkKeyCtrl.classList.toggle('active-mod', vkCtrl);
+    if (vkKeyShift) vkKeyShift.classList.toggle('active-mod', vkShift);
+    if (vkKeyAlt) vkKeyAlt.classList.toggle('active-mod', vkAlt);
+    if (vkKeyCaps) vkKeyCaps.classList.toggle('active-mod', vkCaps);
+    if (vkKeyMeta) vkKeyMeta.classList.toggle('active-mod', vkMeta);
+
+    // Update character keys labels based on Shift & Caps
+    const charKeys = document.querySelectorAll('.vk-key-char');
+    charKeys.forEach(k => {
+      const base = k.getAttribute('data-base');
+      const shift = k.getAttribute('data-shift');
+      if (!base || !shift) return;
+      const isAlpha = /^[a-zA-Z]$/.test(base);
+      if (isAlpha) {
+        const isUpper = (vkCaps && !vkShift) || (!vkCaps && vkShift);
+        k.textContent = isUpper ? shift : base;
+      } else {
+        k.textContent = vkShift ? shift : base;
+      }
+    });
+  }
+
+  function openVirtualKeyboard() {
+    if (!virtualKeyboardPanel) return;
+    virtualKeyboardPanel.classList.add('open');
+    if (btnEssentialsKeyboard) {
+      btnEssentialsKeyboard.classList.add('active');
+    }
+    updateViewportDimensions();
+    requestAnimationFrame(() => {
+      if (fit) {
+        try { fit.fit(); } catch {}
+      }
+      sendResize();
+      if (term) term.scrollToBottom();
+    });
+    logDebug('VK_OPEN', 'Virtual keyboard opened');
+  }
+
+  function closeVirtualKeyboard() {
+    if (!virtualKeyboardPanel) return;
+    virtualKeyboardPanel.classList.remove('open');
+    if (btnEssentialsKeyboard) {
+      btnEssentialsKeyboard.classList.remove('active');
+    }
+    updateViewportDimensions();
+    requestAnimationFrame(() => {
+      if (fit) {
+        try { fit.fit(); } catch {}
+      }
+      sendResize();
+      if (term) term.scrollToBottom();
+    });
+    logDebug('VK_CLOSE', 'Virtual keyboard closed');
+  }
+
+  function toggleVirtualKeyboard() {
+    if (virtualKeyboardPanel && virtualKeyboardPanel.classList.contains('open')) {
+      closeVirtualKeyboard();
+    } else {
+      openVirtualKeyboard();
+    }
+  }
+
+  if (btnEssentialsKeyboard) {
+    btnEssentialsKeyboard.addEventListener('click', (e) => {
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      closeEssentialsMenu();
+      toggleVirtualKeyboard();
+      logDebug('KEYBOARD_ACTIVATE', 'Toggled laptop-style virtual keyboard');
+    });
+  }
+
+  if (btnCloseVk) {
+    btnCloseVk.addEventListener('click', (e) => {
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      closeVirtualKeyboard();
+    });
+  }
+
+  // Virtual Keyboard Tabs
+  function switchVkTab(tabName) {
+    if (btnVkTabMain) btnVkTabMain.classList.toggle('active', tabName === 'main');
+    if (btnVkTabNav) btnVkTabNav.classList.toggle('active', tabName === 'nav');
+    if (btnVkTabShortcuts) btnVkTabShortcuts.classList.toggle('active', tabName === 'shortcuts');
+
+    if (vkViewMain) vkViewMain.style.display = tabName === 'main' ? 'flex' : 'none';
+    if (vkViewNav) vkViewNav.style.display = tabName === 'nav' ? 'flex' : 'none';
+    if (vkViewShortcuts) vkViewShortcuts.style.display = tabName === 'shortcuts' ? 'flex' : 'none';
+  }
+
+  if (btnVkTabMain) {
+    btnVkTabMain.addEventListener('click', (e) => { e.preventDefault(); switchVkTab('main'); });
+  }
+  if (btnVkTabNav) {
+    btnVkTabNav.addEventListener('click', (e) => { e.preventDefault(); switchVkTab('nav'); });
+  }
+  if (btnVkTabShortcuts) {
+    btnVkTabShortcuts.addEventListener('click', (e) => { e.preventDefault(); switchVkTab('shortcuts'); });
+  }
+
+  // Modifier Keys
+  if (vkKeyCtrl) {
+    const toggleCtrl = (e) => {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      vkCtrl = !vkCtrl;
+      updateVkModifiers();
+    };
+    vkKeyCtrl.addEventListener('pointerdown', toggleCtrl);
+    vkKeyCtrl.addEventListener('click', (e) => e.preventDefault());
+  }
+
+  if (vkKeyShift) {
+    const toggleShift = (e) => {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      vkShift = !vkShift;
+      updateVkModifiers();
+    };
+    vkKeyShift.addEventListener('pointerdown', toggleShift);
+    vkKeyShift.addEventListener('click', (e) => e.preventDefault());
+  }
+
+  if (vkKeyAlt) {
+    const toggleAlt = (e) => {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      vkAlt = !vkAlt;
+      updateVkModifiers();
+    };
+    vkKeyAlt.addEventListener('pointerdown', toggleAlt);
+    vkKeyAlt.addEventListener('click', (e) => e.preventDefault());
+  }
+
+  if (vkKeyCaps) {
+    const toggleCaps = (e) => {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      vkCaps = !vkCaps;
+      updateVkModifiers();
+    };
+    vkKeyCaps.addEventListener('pointerdown', toggleCaps);
+    vkKeyCaps.addEventListener('click', (e) => e.preventDefault());
+  }
+
+  if (vkKeyMeta) {
+    const toggleMeta = (e) => {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      vkMeta = !vkMeta;
+      updateVkModifiers();
+    };
+    vkKeyMeta.addEventListener('pointerdown', toggleMeta);
+    vkKeyMeta.addEventListener('click', (e) => e.preventDefault());
+  }
+
+  // Virtual Key Press Handler
+  let lastVkTapTime = 0;
+
+  function handleVkKeyPress(targetKey, e) {
+    if (e) {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    }
+    const now = Date.now();
+    if (now - lastVkTapTime < 80) return;
+    lastVkTapTime = now;
+
+    targetKey.classList.add('pressed');
+    setTimeout(() => targetKey.classList.remove('pressed'), 120);
+
+    let output = '';
+
+    if (targetKey.classList.contains('vk-key-char')) {
+      const base = targetKey.getAttribute('data-base') || '';
+      const shift = targetKey.getAttribute('data-shift') || '';
+      const isAlpha = /^[a-zA-Z]$/.test(base);
+      let char = base;
+      if (isAlpha) {
+        const isUpper = (vkCaps && !vkShift) || (!vkCaps && vkShift);
+        char = isUpper ? shift : base;
+      } else {
+        char = vkShift ? shift : base;
+      }
+
+      if (vkCtrl) {
+        if (isAlpha) {
+          const code = char.toUpperCase().charCodeAt(0) - 64;
+          if (code >= 1 && code <= 26) {
+            output = String.fromCharCode(code);
+          } else {
+            output = char;
+          }
+        } else if (char === '@') output = '\x00';
+        else if (char === '[') output = '\x1b';
+        else if (char === '\\') output = '\x1c';
+        else if (char === ']') output = '\x1d';
+        else if (char === '^') output = '\x1e';
+        else if (char === '_') output = '\x1f';
+        else output = char;
+      } else {
+        output = char;
+      }
+
+      if (vkAlt) {
+        output = '\x1b' + output;
+      }
+    } else if (targetKey.hasAttribute('data-seq')) {
+      let seq = targetKey.getAttribute('data-seq');
+      if (vkCtrl) {
+        if (seq === '\x1b[A') seq = '\x1b[1;5A';
+        else if (seq === '\x1b[B') seq = '\x1b[1;5B';
+        else if (seq === '\x1b[C') seq = '\x1b[1;5C';
+        else if (seq === '\x1b[D') seq = '\x1b[1;5D';
+      }
+      if (vkAlt && !seq.startsWith('\x1b')) {
+        seq = '\x1b' + seq;
+      }
+      output = seq;
+    }
+
+    if (output) {
+      sendInput(output);
+    }
+
+    // Reset one-shot modifiers (Shift, Ctrl, Alt, Meta) after sending
+    if (vkShift || vkCtrl || vkAlt || vkMeta) {
+      vkShift = false;
+      vkCtrl = false;
+      vkAlt = false;
+      vkMeta = false;
+      updateVkModifiers();
+    }
+  }
+
+  // Ctrl+Shift+C & Ctrl+Shift+V Combos
+  const comboCtrlShiftC = document.getElementById('vk-combo-ctrl-shift-c');
+  if (comboCtrlShiftC) {
+    const handleCopyCombo = async (e) => {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      comboCtrlShiftC.classList.add('pressed');
+      setTimeout(() => comboCtrlShiftC.classList.remove('pressed'), 120);
+      let text = '';
+      if (term && term.getSelection && term.getSelection()) {
+        text = term.getSelection();
+      }
+      if (text) {
+        await copyTextToClipboard(text);
+        logDebug('VK_COMBO', `Ctrl+Shift+C copied ${text.length} chars`);
+      } else {
+        await triggerCopyLast();
+      }
+    };
+    comboCtrlShiftC.addEventListener('pointerdown', handleCopyCombo);
+    comboCtrlShiftC.addEventListener('click', (e) => e.preventDefault());
+  }
+
+  const comboCtrlShiftV = document.getElementById('vk-combo-ctrl-shift-v');
+  if (comboCtrlShiftV) {
+    const handlePasteCombo = async (e) => {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      comboCtrlShiftV.classList.add('pressed');
+      setTimeout(() => comboCtrlShiftV.classList.remove('pressed'), 120);
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            const normalized = text.replace(/\r\n/g, '\r').replace(/\n/g, '\r');
+            sendInput(normalized);
+            logDebug('VK_COMBO', `Ctrl+Shift+V pasted ${text.length} chars`);
+          }
+        }
+      } catch (err) {
+        console.warn('Clipboard paste error:', err);
+      }
+    };
+    comboCtrlShiftV.addEventListener('pointerdown', handlePasteCombo);
+    comboCtrlShiftV.addEventListener('click', (e) => e.preventDefault());
+  }
+
+  // Attach virtual keyboard keys listeners
+  if (virtualKeyboardPanel) {
+    const allVkKeys = virtualKeyboardPanel.querySelectorAll('.vk-key');
+    allVkKeys.forEach(k => {
+      if (k.id === 'vk-key-ctrl' || k.id === 'vk-key-shift' || k.id === 'vk-key-alt' ||
+          k.id === 'vk-key-caps' || k.id === 'vk-key-meta' || k.id === 'vk-combo-ctrl-shift-c' ||
+          k.id === 'vk-combo-ctrl-shift-v') {
+        return;
+      }
+      k.addEventListener('pointerdown', (e) => handleVkKeyPress(k, e));
+      k.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      });
+    });
+  }
+
+  // --- Mouse Control Mode & Touchpad Overlay ---
+  const touchpadOverlay = document.getElementById('touchpad-overlay');
+  const touchpadSurface = document.getElementById('touchpad-surface');
+  const touchpadPointer = document.getElementById('touchpad-pointer');
+  const touchpadCoords = document.getElementById('touchpad-coords');
+  const btnCloseTouchpad = document.getElementById('btn-close-touchpad');
+  const touchpadBtnLeft = document.getElementById('touchpad-btn-left');
+  const touchpadBtnRight = document.getElementById('touchpad-btn-right');
+  const terminalCellCursor = document.getElementById('terminal-cell-cursor');
+
+  // Dual-mode Mouse Switcher & Select Controls
+  const btnModeSelect = document.getElementById('btn-mode-select');
+  const btnModePointer = document.getElementById('btn-mode-pointer');
+  const touchpadViewSelect = document.getElementById('touchpad-view-select');
+  const touchpadViewPointer = document.getElementById('touchpad-view-pointer');
+  const btnSelCopy = document.getElementById('btn-sel-copy');
+  const btnSelAll = document.getElementById('btn-sel-all');
+  const btnSelClear = document.getElementById('btn-sel-clear');
+  const selectionStatusText = document.getElementById('selection-status-text');
+
+  let mouseModeActive = false;
+  let currentMouseMode = 'select'; // 'select' | 'pointer'
+  let mousePointerCol = 1;
+  let mousePointerRow = 1;
+
+  function updateSelectionStatus() {
+    if (!selectionStatusText) return;
+    const selText = term && term.getSelection ? term.getSelection() : '';
+    if (selText && selText.length > 0) {
+      const lineCount = selText.split('\n').length;
+      selectionStatusText.textContent = `Selected ${selText.length} chars (${lineCount} line${lineCount > 1 ? 's' : ''})`;
+    } else {
+      selectionStatusText.textContent = 'Drag on terminal to select text';
+    }
+  }
+
+  if (term) {
+    term.onSelectionChange(() => {
+      updateSelectionStatus();
+    });
+  }
+
+  function setTouchpadMode(mode) {
+    currentMouseMode = mode;
+    if (btnModeSelect) btnModeSelect.classList.toggle('active', mode === 'select');
+    if (btnModePointer) btnModePointer.classList.toggle('active', mode === 'pointer');
+    if (touchpadViewSelect) touchpadViewSelect.style.display = mode === 'select' ? 'flex' : 'none';
+    if (touchpadViewPointer) touchpadViewPointer.style.display = mode === 'pointer' ? 'block' : 'none';
+    if (terminalCellCursor) {
+      terminalCellCursor.style.display = (mouseModeActive && mode === 'pointer') ? 'block' : 'none';
+      if (mouseModeActive && mode === 'pointer') updateTerminalCursorPosition();
+    }
+    updateSelectionStatus();
+  }
+
+  if (btnModeSelect) {
+    btnModeSelect.addEventListener('click', (e) => {
+      e.preventDefault();
+      setTouchpadMode('select');
+    });
+  }
+
+  if (btnModePointer) {
+    btnModePointer.addEventListener('click', (e) => {
+      e.preventDefault();
+      setTouchpadMode('pointer');
+    });
+  }
+
+  if (btnSelAll) {
+    btnSelAll.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (term && term.selectAll) {
+        term.selectAll();
+        updateSelectionStatus();
+      }
+    });
+  }
+
+  if (btnSelClear) {
+    btnSelClear.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (term && term.clearSelection) {
+        term.clearSelection();
+        updateSelectionStatus();
+      }
+    });
+  }
+
+  if (btnSelCopy) {
+    btnSelCopy.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const selText = term && term.getSelection ? term.getSelection() : '';
+      if (selText) {
+        const ok = await copyTextToClipboard(selText);
+        if (ok) {
+          const prev = btnSelCopy.textContent;
+          btnSelCopy.textContent = '✓ Copied!';
+          setTimeout(() => { btnSelCopy.textContent = prev; }, 1200);
+          if (selectionStatusText) selectionStatusText.textContent = `Copied ${selText.length} chars!`;
+        }
+      } else {
+        await triggerCopyLast();
+      }
+    });
+  }
+
+  // Direct touch-and-drag text selection on #terminal-container
+  const termContainerEl = document.getElementById('terminal-container');
+  let isSelectingOnTerminal = false;
+  let selStartInfo = null;
+
+  function getTerminalCellFromCoords(clientX, clientY) {
+    if (!term || !term.element) return null;
+    const rect = term.element.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const cols = term.cols || 80;
+    const rows = term.rows || 24;
+    const cellW = rect.width / cols;
+    const cellH = rect.height / rows;
+    const col = Math.max(0, Math.min(cols - 1, Math.floor(x / cellW)));
+    const row = Math.max(0, Math.min(rows - 1, Math.floor(y / cellH)));
+    const b = term.buffer && term.buffer.active ? term.buffer.active : null;
+    const bufferRow = (b ? b.viewportY : 0) + row;
+    return { col, row, bufferRow };
+  }
+
+  if (termContainerEl) {
+    termContainerEl.addEventListener('pointerdown', (e) => {
+      if (mouseModeActive && currentMouseMode === 'select') {
+        const cell = getTerminalCellFromCoords(e.clientX, e.clientY);
+        if (cell) {
+          isSelectingOnTerminal = true;
+          selStartInfo = cell;
+          try { termContainerEl.setPointerCapture(e.pointerId); } catch {}
+          if (term && term.clearSelection) term.clearSelection();
+        }
+      }
+    });
+
+    termContainerEl.addEventListener('pointermove', (e) => {
+      if (!isSelectingOnTerminal || !selStartInfo || !term) return;
+      const curCell = getTerminalCellFromCoords(e.clientX, e.clientY);
+      if (!curCell) return;
+
+      const startBufRow = selStartInfo.bufferRow;
+      const curBufRow = curCell.bufferRow;
+
+      if (startBufRow === curBufRow) {
+        const minCol = Math.min(selStartInfo.col, curCell.col);
+        const len = Math.abs(curCell.col - selStartInfo.col) + 1;
+        term.select(minCol, startBufRow, len);
+      } else {
+        const minRow = Math.min(startBufRow, curBufRow);
+        const maxRow = Math.max(startBufRow, curBufRow);
+        term.selectLines(minRow, maxRow);
+      }
+      updateSelectionStatus();
+    });
+
+    const endTerminalSelect = () => {
+      if (isSelectingOnTerminal) {
+        isSelectingOnTerminal = false;
+        selStartInfo = null;
+        updateSelectionStatus();
+      }
+    };
+
+    termContainerEl.addEventListener('pointerup', endTerminalSelect);
+    termContainerEl.addEventListener('pointercancel', endTerminalSelect);
+  }
+
+  function setMouseMode(active) {
+    mouseModeActive = active;
+    if (btnEssentialsMouse) {
+      btnEssentialsMouse.classList.toggle('active', active);
+    }
+    if (touchpadOverlay) {
+      touchpadOverlay.classList.toggle('open', active);
+    }
+    if (terminalCellCursor) {
+      terminalCellCursor.style.display = (active && currentMouseMode === 'pointer') ? 'block' : 'none';
+      if (active && currentMouseMode === 'pointer') updateTerminalCursorPosition();
+    }
+    if (active) {
+      updateSelectionStatus();
+    }
+    logDebug('MOUSE_MODE', `active=${active} mode=${currentMouseMode}`);
+  }
+
+  function toggleMouseMode() {
+    setMouseMode(!mouseModeActive);
+  }
+
+  if (btnEssentialsMouse) {
+    btnEssentialsMouse.addEventListener('click', (e) => {
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      closeEssentialsMenu();
+      toggleMouseMode();
+    });
+  }
+
+  if (btnCloseTouchpad) {
+    btnCloseTouchpad.addEventListener('click', (e) => {
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      setMouseMode(false);
+    });
+  }
+
+  function updateCoordsDisplay() {
+    if (touchpadCoords) {
+      touchpadCoords.textContent = `${mousePointerCol}, ${mousePointerRow}`;
+    }
+    updateTerminalCursorPosition();
+  }
+
+  function updateTerminalCursorPosition() {
+    if (!terminalCellCursor || !term) return;
+    const termContainer = document.getElementById('terminal-container');
+    if (!termContainer) return;
+
+    const termWidth = termContainer.clientWidth;
+    const termHeight = termContainer.clientHeight;
+    const cols = term.cols || 80;
+    const rows = term.rows || 24;
+    const cellW = termWidth / cols;
+    const cellH = termHeight / rows;
+
+    terminalCellCursor.style.width = `${Math.max(6, cellW)}px`;
+    terminalCellCursor.style.height = `${Math.max(12, cellH)}px`;
+    terminalCellCursor.style.left = `${(mousePointerCol - 1) * cellW + 4}px`;
+    terminalCellCursor.style.top = `${(mousePointerRow - 1) * cellH + 2}px`;
+  }
+
+  // SGR Mouse reporting: \x1b[<button;col;rowM (down), \x1b[<button;col;rowm (up)
+  function sendTerminalClick(button = 0) {
+    const col = Math.max(1, Math.min(term ? term.cols : 80, mousePointerCol));
+    const row = Math.max(1, Math.min(term ? term.rows : 24, mousePointerRow));
+    const downSeq = `\x1b[<${button};${col};${row}M`;
+    const upSeq = `\x1b[<${button};${col};${row}m`;
+    sendInput(downSeq + upSeq);
+    logDebug('MOUSE_CLICK', `btn=${button} (${col},${row})`);
+  }
+
+  function sendTerminalWheel(direction = 'up') {
+    const col = Math.max(1, Math.min(term ? term.cols : 80, mousePointerCol));
+    const row = Math.max(1, Math.min(term ? term.rows : 24, mousePointerRow));
+    const btn = direction === 'up' ? 64 : 65;
+    sendInput(`\x1b[<${btn};${col};${row}M`);
+    if (term) {
+      term.scrollLines(direction === 'up' ? -SCROLL_AMOUNT : SCROLL_AMOUNT);
+      updateScrollButtonState();
+    }
+  }
+
+  if (touchpadBtnLeft) {
+    touchpadBtnLeft.addEventListener('click', (e) => {
+      e.preventDefault();
+      sendTerminalClick(0);
+    });
+  }
+
+  if (touchpadBtnRight) {
+    touchpadBtnRight.addEventListener('click', (e) => {
+      e.preventDefault();
+      sendTerminalClick(2);
+    });
+  }
+
+  let isTrackingPointer = false;
+  let trackLastX = 0;
+  let trackLastY = 0;
+  let trackStartTime = 0;
+  let totalMovedDist = 0;
+
+  if (touchpadSurface) {
+    touchpadSurface.addEventListener('pointerdown', (e) => {
+      touchpadSurface.setPointerCapture(e.pointerId);
+      isTrackingPointer = true;
+      trackLastX = e.clientX;
+      trackLastY = e.clientY;
+      trackStartTime = Date.now();
+      totalMovedDist = 0;
+
+      const rect = touchpadSurface.getBoundingClientRect();
+      if (touchpadPointer) {
+        touchpadPointer.style.display = 'block';
+        touchpadPointer.style.left = `${e.clientX - rect.left}px`;
+        touchpadPointer.style.top = `${e.clientY - rect.top}px`;
+      }
+    });
+
+    touchpadSurface.addEventListener('pointermove', (e) => {
+      if (!isTrackingPointer) return;
+      const dx = e.clientX - trackLastX;
+      const dy = e.clientY - trackLastY;
+      trackLastX = e.clientX;
+      trackLastY = e.clientY;
+      totalMovedDist += Math.abs(dx) + Math.abs(dy);
+
+      const maxCols = term ? term.cols : 80;
+      const maxRows = term ? term.rows : 24;
+
+      const colChange = Math.round(dx / 4);
+      const rowChange = Math.round(dy / 6);
+
+      if (colChange !== 0) {
+        mousePointerCol = Math.max(1, Math.min(maxCols, mousePointerCol + colChange));
+      }
+      if (rowChange !== 0) {
+        mousePointerRow = Math.max(1, Math.min(maxRows, mousePointerRow + rowChange));
+      }
+
+      updateCoordsDisplay();
+
+      const rect = touchpadSurface.getBoundingClientRect();
+      if (touchpadPointer) {
+        const px = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+        const py = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+        touchpadPointer.style.left = `${px}px`;
+        touchpadPointer.style.top = `${py}px`;
+      }
+    });
+
+    function endPointerTracking(e) {
+      if (!isTrackingPointer) return;
+      isTrackingPointer = false;
+      try { touchpadSurface.releasePointerCapture(e.pointerId); } catch {}
+      if (touchpadPointer) {
+        touchpadPointer.style.display = 'none';
+      }
+
+      const elapsed = Date.now() - trackStartTime;
+      if (elapsed < 300 && totalMovedDist < 10) {
+        sendTerminalClick(0);
+      }
+    }
+
+    touchpadSurface.addEventListener('pointerup', endPointerTracking);
+    touchpadSurface.addEventListener('pointercancel', endPointerTracking);
+
+    touchpadSurface.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      sendTerminalWheel(e.deltaY < 0 ? 'up' : 'down');
+    }, { passive: false });
+  }
+
+  // --- Prompt / Paste Input Bar (Multiline & Instant Send) ---
   function sendPrompt() {
     const val = promptInput.value;
     if (!val) return;
-    sendInput(val + '\r');
+    const normalized = val.replace(/\r\n/g, '\r').replace(/\n/g, '\r');
+    sendInput(normalized + '\r');
     promptInput.value = '';
+    promptInput.style.height = '38px';
     if (term) term.focus();
+    logDebug('SEND_PROMPT', `Sent ${val.length} chars to terminal`);
   }
-  btnSendPrompt.onclick = sendPrompt;
-  promptInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      sendPrompt();
-    }
-  });
+
+  if (btnSendPrompt) btnSendPrompt.onclick = sendPrompt;
+
+  if (promptInput) {
+    promptInput.addEventListener('keydown', (e) => {
+      // Enter without Ctrl/Cmd inserts a newline into the textarea
+      // Ctrl+Enter or Cmd+Enter submits the prompt
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        sendPrompt();
+      }
+    });
+
+    promptInput.addEventListener('input', () => {
+      promptInput.style.height = '38px';
+      const newHeight = Math.min(120, Math.max(38, promptInput.scrollHeight));
+      promptInput.style.height = `${newHeight}px`;
+    });
+  }
 
   function stripAnsi(str) {
     if (!str) return '';
@@ -1260,19 +2969,20 @@
   async function triggerCopyLast() {
     if (!currentSessionId) return;
 
-    const originalText = '📋 COPY LAST';
-    if (btnCopyLast) {
-      btnCopyLast.textContent = '⏳ Copying...';
-      btnCopyLast.disabled = true;
-    }
+    const copyIconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    const checkIconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
     try {
       let textToCopy = '';
-      const localExtract = term ? extractFromTerminal(term) : { text: '', isAgy: false };
-      if (localExtract.isAgy && localExtract.text) {
-        // AGY session: instant extraction from local screen buffer
-        textToCopy = localExtract.text;
-      } else {
+      if (term && typeof term.hasSelection === 'function' && term.hasSelection()) {
+        textToCopy = term.getSelection() || '';
+      }
+      if (!textToCopy) {
+        const localExtract = term ? extractFromTerminal(term) : { text: '', isAgy: false };
+        if (localExtract.isAgy && localExtract.text) {
+          // AGY session: instant extraction from local screen buffer
+          textToCopy = localExtract.text;
+        } else {
         // Regular shell: fetch exact command boundary from server
         try {
           const res = await fetch(`${base}/api/sessions/${currentSessionId}/last-interaction`, {
@@ -1289,16 +2999,13 @@
           textToCopy = localExtract.text;
         }
       }
-
+    }
 
       if (!textToCopy) {
-        if (btnCopyLast) btnCopyLast.textContent = 'Nothing yet';
-        setTimeout(() => {
-          if (btnCopyLast) {
-            btnCopyLast.textContent = originalText;
-            btnCopyLast.disabled = false;
-          }
-        }, 1200);
+        if (keyCopyLast) {
+          keyCopyLast.style.opacity = '0.5';
+          setTimeout(() => { if (keyCopyLast) keyCopyLast.style.opacity = '1'; }, 1000);
+        }
         return;
       }
 
@@ -1331,45 +3038,24 @@
 
       if (copied) {
         logDebug('COPY_LAST', `Copied ${textToCopy.length} chars to clipboard`);
-        if (btnCopyLast) {
-          btnCopyLast.textContent = '✓ Copied';
-          btnCopyLast.style.background = '#1f6feb';
-          btnCopyLast.style.borderColor = '#58a6ff';
+        if (keyCopyLast) {
+          keyCopyLast.classList.add('copied');
+          keyCopyLast.innerHTML = checkIconSvg;
+          setTimeout(() => {
+            if (keyCopyLast) {
+              keyCopyLast.classList.remove('copied');
+              keyCopyLast.innerHTML = copyIconSvg;
+            }
+          }, 1500);
         }
-        if (keyCopyLast) keyCopyLast.textContent = '✓ COPIED';
-
-        setTimeout(() => {
-          if (btnCopyLast) {
-            btnCopyLast.textContent = originalText;
-            btnCopyLast.style.background = '';
-            btnCopyLast.style.borderColor = '';
-            btnCopyLast.disabled = false;
-          }
-          if (keyCopyLast) keyCopyLast.textContent = 'COPY LAST';
-        }, 1500);
       } else {
         logDebug('CLIP_FAIL', 'Clipboard permission unavailable');
-        if (btnCopyLast) btnCopyLast.textContent = '⚠️ Copy failed';
-        setTimeout(() => {
-          if (btnCopyLast) {
-            btnCopyLast.textContent = originalText;
-            btnCopyLast.disabled = false;
-          }
-        }, 2000);
       }
     } catch (err) {
       logDebug('COPY_ERR', err.message);
-      if (btnCopyLast) btnCopyLast.textContent = '⚠️ Error';
-      setTimeout(() => {
-        if (btnCopyLast) {
-          btnCopyLast.textContent = originalText;
-          btnCopyLast.disabled = false;
-        }
-      }, 1500);
     }
   }
 
-  if (btnCopyLast) btnCopyLast.onclick = triggerCopyLast;
   if (keyCopyLast) keyCopyLast.onclick = triggerCopyLast;
 
   // Reconnect Button
