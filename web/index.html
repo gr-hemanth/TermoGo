@@ -890,6 +890,31 @@
       border-color: #58a6ff;
       color: #fff;
     }
+    .touchpad-btn.latched {
+      background: #1f6feb !important;
+      border-color: #58a6ff !important;
+      color: #fff !important;
+      box-shadow: 0 0 8px rgba(56, 166, 255, 0.6);
+    }
+    .touchpad-surface.selecting {
+      border-color: var(--accent);
+      background: #0d121a;
+    }
+    .touchpad-surface::after {
+      content: '⇅';
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: #30363d;
+      pointer-events: none;
+    }
+    .tool-btn-copy.copied svg {
+      stroke: #ffffff;
+      transform: scale(1.08);
+      transition: transform 0.15s ease, stroke 0.15s ease;
+    }
     .touchpad-btn-scroll {
       font-size: 11px;
       padding: 0 6px;
@@ -1327,31 +1352,35 @@
 
     <!-- Mode 1: Select / Copy Mode View -->
     <div class="touchpad-view-select" id="touchpad-view-select">
-      <div class="selection-status-text" id="selection-status-text">Drag on terminal to select text</div>
-      <div class="touchpad-actions">
-        <button class="touchpad-btn mouse-btn-primary" id="btn-sel-copy" type="button" tabindex="-1">📋 Copy</button>
-        <button class="touchpad-btn" id="btn-sel-all" type="button" tabindex="-1">Select All</button>
-        <button class="touchpad-btn" id="btn-sel-clear" type="button" tabindex="-1">Clear</button>
+      <div class="selection-status-text" id="selection-status-text">Move pointer or drag to select text</div>
+      <div class="touchpad-actions" style="margin-bottom:2px;">
+        <button class="touchpad-btn mouse-btn-primary" id="btn-sel-copy" type="button" tabindex="-1" title="Copy Selected Text">📋 Copy</button>
+        <button class="touchpad-btn" id="btn-sel-all" type="button" tabindex="-1" title="Select All Buffer">Select All</button>
+        <button class="touchpad-btn" id="btn-sel-clear" type="button" tabindex="-1" title="Clear Selection">Clear</button>
       </div>
     </div>
 
     <!-- Mode 2: Pointer Mode View -->
     <div class="touchpad-view-pointer" id="touchpad-view-pointer" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <span style="font-size:10px; color:#8b949e;">Coords:</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+        <span style="font-size:10px; color:#8b949e;" id="pointer-mode-desc">App Pointer (TUI)</span>
         <span class="touchpad-coords" id="touchpad-coords">1, 1</span>
       </div>
-      <div class="touchpad-surface" id="touchpad-surface">
-        <div class="touchpad-pointer" id="touchpad-pointer"></div>
-        <span class="touchpad-surface-hint">Touch &amp; Drag</span>
-      </div>
-      <div class="touchpad-actions" style="margin-top:6px;">
-        <button class="touchpad-btn" id="touchpad-btn-left" type="button" tabindex="-1" title="Left Click">L</button>
-        <button class="touchpad-btn" id="touchpad-btn-right" type="button" tabindex="-1" title="Right Click">R</button>
-        <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll" id="btn-scroll-up" type="button" tabindex="-1" title="Scroll Up">▲</button>
-        <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll" id="btn-scroll-down" type="button" tabindex="-1" title="Scroll Down">▼</button>
-        <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll-bottom" id="btn-scroll-bottom" type="button" tabindex="-1" title="Scroll to Bottom" style="display:none;">⇣</button>
-      </div>
+    </div>
+
+    <!-- Common Touchpad Surface (Available in both modes) -->
+    <div class="touchpad-surface" id="touchpad-surface">
+      <div class="touchpad-pointer" id="touchpad-pointer"></div>
+      <span class="touchpad-surface-hint" id="touchpad-surface-hint">Touch &amp; Drag</span>
+    </div>
+
+    <!-- Common Touchpad Actions Bar -->
+    <div class="touchpad-actions">
+      <button class="touchpad-btn" id="touchpad-btn-left" type="button" tabindex="-1" title="Left Click / Latch Drag">L</button>
+      <button class="touchpad-btn" id="touchpad-btn-right" type="button" tabindex="-1" title="Right Click / Clear">R</button>
+      <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll" id="btn-scroll-up" type="button" tabindex="-1" title="Scroll Up">▲</button>
+      <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll" id="btn-scroll-down" type="button" tabindex="-1" title="Scroll Down">▼</button>
+      <button class="touchpad-btn touchpad-btn-scroll tool-key-scroll-bottom" id="btn-scroll-bottom" type="button" tabindex="-1" title="Scroll to Bottom" style="display:none;">⇣</button>
     </div>
   </div>
 
@@ -1739,6 +1768,9 @@
     if (currentSessionId && currentSessionId !== id && term) {
       term.reset();
     }
+    if (typeof resetMouseInteractionState === 'function') {
+      resetMouseInteractionState();
+    }
     currentSessionId = id;
     currentSessionTitle = title || 'Terminal';
     const titleEl = document.getElementById('current-term-title') || currentTermName.querySelector('.session-title-text');
@@ -1912,7 +1944,9 @@
   if (btnScrollUp) {
     btnScrollUp.onclick = (e) => {
       e.preventDefault();
-      if (term) {
+      if (typeof mouseModeActive !== 'undefined' && mouseModeActive && currentMouseMode === 'pointer' && typeof isAppMouseTrackingActive === 'function' && isAppMouseTrackingActive()) {
+        sendTerminalWheel('up');
+      } else if (term) {
         term.scrollLines(-SCROLL_AMOUNT);
         updateScrollButtonState();
       }
@@ -1922,7 +1956,9 @@
   if (btnScrollDown) {
     btnScrollDown.onclick = (e) => {
       e.preventDefault();
-      if (term) {
+      if (typeof mouseModeActive !== 'undefined' && mouseModeActive && currentMouseMode === 'pointer' && typeof isAppMouseTrackingActive === 'function' && isAppMouseTrackingActive()) {
+        sendTerminalWheel('down');
+      } else if (term) {
         term.scrollLines(SCROLL_AMOUNT);
         updateScrollButtonState();
       }
@@ -2486,11 +2522,35 @@
   const btnSelAll = document.getElementById('btn-sel-all');
   const btnSelClear = document.getElementById('btn-sel-clear');
   const selectionStatusText = document.getElementById('selection-status-text');
+  const pointerModeDesc = document.getElementById('pointer-mode-desc');
+  const touchpadSurfaceHint = document.getElementById('touchpad-surface-hint');
 
   let mouseModeActive = false;
   let currentMouseMode = 'select'; // 'select' | 'pointer'
   let mousePointerCol = 1;
   let mousePointerRow = 1;
+  let isLeftButtonLatched = false;
+  let isLeftButtonHeld = false;
+  let isTapAndHoldSelecting = false;
+  let isSelectingOnTerminal = false;
+  let selectionAnchor = null;
+  let selectionHead = null;
+  let tapHoldTimer = null;
+
+  function isAppMouseTrackingActive() {
+    return !!(term && term._core && term._core.coreMouseService && term._core.coreMouseService.areMouseEventsActive);
+  }
+
+  function updatePointerModeDesc() {
+    if (!pointerModeDesc) return;
+    if (isAppMouseTrackingActive()) {
+      pointerModeDesc.textContent = 'App Mouse: Active';
+      pointerModeDesc.style.color = '#3fb950';
+    } else {
+      pointerModeDesc.textContent = 'App Mouse: Inactive';
+      pointerModeDesc.style.color = '#8b949e';
+    }
+  }
 
   function updateSelectionStatus() {
     if (!selectionStatusText) return;
@@ -2498,8 +2558,12 @@
     if (selText && selText.length > 0) {
       const lineCount = selText.split('\n').length;
       selectionStatusText.textContent = `Selected ${selText.length} chars (${lineCount} line${lineCount > 1 ? 's' : ''})`;
+    } else if (isLeftButtonLatched) {
+      selectionStatusText.textContent = 'L Latched: Drag touchpad to select';
+    } else if (isTapAndHoldSelecting) {
+      selectionStatusText.textContent = 'Hold & Drag to select...';
     } else {
-      selectionStatusText.textContent = 'Drag on terminal to select text';
+      selectionStatusText.textContent = 'Move pointer or drag to select';
     }
   }
 
@@ -2509,15 +2573,88 @@
     });
   }
 
+  function applySelectionRange(anchor, head) {
+    if (!term || typeof term.select !== 'function') return;
+    if (!anchor || !head) {
+      if (term.clearSelection) term.clearSelection();
+      return;
+    }
+
+    let start, end;
+    if (anchor.bufferRow < head.bufferRow || (anchor.bufferRow === head.bufferRow && anchor.col <= head.col)) {
+      start = anchor;
+      end = head;
+    } else {
+      start = head;
+      end = anchor;
+    }
+
+    const cols = term.cols || 80;
+    const startCol = Math.max(0, Math.min(cols - 1, start.col));
+    const startRow = Math.max(0, start.bufferRow);
+    const endCol = Math.max(0, Math.min(cols - 1, end.col));
+    const endRow = Math.max(0, end.bufferRow);
+
+    let length = 0;
+    if (startRow === endRow) {
+      length = Math.max(1, endCol - startCol + 1);
+    } else {
+      length = cols * (endRow - startRow) + (endCol - startCol + 1);
+    }
+
+    term.select(startCol, startRow, length);
+  }
+
+  function resetMouseInteractionState() {
+    if (tapHoldTimer) {
+      clearTimeout(tapHoldTimer);
+      tapHoldTimer = null;
+    }
+    isLeftButtonLatched = false;
+    isLeftButtonHeld = false;
+    isTapAndHoldSelecting = false;
+    isSelectingOnTerminal = false;
+    isTrackingPointer = false;
+    selectionAnchor = null;
+    selectionHead = null;
+    if (touchpadBtnLeft) {
+      touchpadBtnLeft.classList.remove('latched', 'pressed');
+      touchpadBtnLeft.textContent = 'L';
+    }
+    if (touchpadSurface) {
+      touchpadSurface.classList.remove('selecting');
+    }
+    updateSelectionStatus();
+  }
+
   function setTouchpadMode(mode) {
     currentMouseMode = mode;
+    resetMouseInteractionState();
+
     if (btnModeSelect) btnModeSelect.classList.toggle('active', mode === 'select');
     if (btnModePointer) btnModePointer.classList.toggle('active', mode === 'pointer');
     if (touchpadViewSelect) touchpadViewSelect.style.display = mode === 'select' ? 'flex' : 'none';
     if (touchpadViewPointer) touchpadViewPointer.style.display = mode === 'pointer' ? 'block' : 'none';
+
+    if (touchpadSurfaceHint) {
+      touchpadSurfaceHint.textContent = mode === 'select' ? 'Touch & Drag / Swipe' : 'Touch & Drag (TUI)';
+    }
+
+    if (touchpadBtnLeft) {
+      touchpadBtnLeft.title = mode === 'select' ? 'Latch Left Button to Select' : 'Left Click';
+      touchpadBtnLeft.textContent = 'L';
+    }
+    if (touchpadBtnRight) {
+      touchpadBtnRight.title = mode === 'select' ? 'Clear Selection' : 'Right Click';
+    }
+
     if (terminalCellCursor) {
-      terminalCellCursor.style.display = (mouseModeActive && mode === 'pointer') ? 'block' : 'none';
-      if (mouseModeActive && mode === 'pointer') updateTerminalCursorPosition();
+      terminalCellCursor.style.display = mouseModeActive ? 'block' : 'none';
+      if (mouseModeActive) updateTerminalCursorPosition();
+    }
+
+    if (mode === 'pointer') {
+      updatePointerModeDesc();
     }
     updateSelectionStatus();
   }
@@ -2549,6 +2686,7 @@
   if (btnSelClear) {
     btnSelClear.addEventListener('click', (e) => {
       e.preventDefault();
+      resetMouseInteractionState();
       if (term && term.clearSelection) {
         term.clearSelection();
         updateSelectionStatus();
@@ -2566,7 +2704,9 @@
           const prev = btnSelCopy.textContent;
           btnSelCopy.textContent = '✓ Copied!';
           setTimeout(() => { btnSelCopy.textContent = prev; }, 1200);
-          if (selectionStatusText) selectionStatusText.textContent = `Copied ${selText.length} chars!`;
+          if (selectionStatusText) selectionStatusText.textContent = `✓ Copied ${selText.length} chars!`;
+        } else {
+          showClipboardFallbackModal(selText);
         }
       } else {
         await triggerCopyLast();
@@ -2576,12 +2716,11 @@
 
   // Direct touch-and-drag text selection on #terminal-container
   const termContainerEl = document.getElementById('terminal-container');
-  let isSelectingOnTerminal = false;
-  let selStartInfo = null;
 
   function getTerminalCellFromCoords(clientX, clientY) {
     if (!term || !term.element) return null;
-    const rect = term.element.getBoundingClientRect();
+    const screenEl = term.element.querySelector('.xterm-screen') || term.element;
+    const rect = screenEl.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
     const cols = term.cols || 80;
@@ -2601,7 +2740,11 @@
         const cell = getTerminalCellFromCoords(e.clientX, e.clientY);
         if (cell) {
           isSelectingOnTerminal = true;
-          selStartInfo = cell;
+          selectionAnchor = cell;
+          selectionHead = cell;
+          mousePointerCol = cell.col + 1;
+          mousePointerRow = cell.row + 1;
+          updateCoordsDisplay();
           try { termContainerEl.setPointerCapture(e.pointerId); } catch {}
           if (term && term.clearSelection) term.clearSelection();
         }
@@ -2609,29 +2752,21 @@
     });
 
     termContainerEl.addEventListener('pointermove', (e) => {
-      if (!isSelectingOnTerminal || !selStartInfo || !term) return;
+      if (!isSelectingOnTerminal || !selectionAnchor || !term) return;
       const curCell = getTerminalCellFromCoords(e.clientX, e.clientY);
       if (!curCell) return;
 
-      const startBufRow = selStartInfo.bufferRow;
-      const curBufRow = curCell.bufferRow;
-
-      if (startBufRow === curBufRow) {
-        const minCol = Math.min(selStartInfo.col, curCell.col);
-        const len = Math.abs(curCell.col - selStartInfo.col) + 1;
-        term.select(minCol, startBufRow, len);
-      } else {
-        const minRow = Math.min(startBufRow, curBufRow);
-        const maxRow = Math.max(startBufRow, curBufRow);
-        term.selectLines(minRow, maxRow);
-      }
+      selectionHead = curCell;
+      mousePointerCol = curCell.col + 1;
+      mousePointerRow = curCell.row + 1;
+      updateCoordsDisplay();
+      applySelectionRange(selectionAnchor, selectionHead);
       updateSelectionStatus();
     });
 
     const endTerminalSelect = () => {
       if (isSelectingOnTerminal) {
         isSelectingOnTerminal = false;
-        selStartInfo = null;
         updateSelectionStatus();
       }
     };
@@ -2642,6 +2777,9 @@
 
   function setMouseMode(active) {
     mouseModeActive = active;
+    if (!active) {
+      resetMouseInteractionState();
+    }
     if (btnEssentialsMouse) {
       btnEssentialsMouse.classList.toggle('active', active);
     }
@@ -2649,10 +2787,11 @@
       touchpadOverlay.classList.toggle('open', active);
     }
     if (terminalCellCursor) {
-      terminalCellCursor.style.display = (active && currentMouseMode === 'pointer') ? 'block' : 'none';
-      if (active && currentMouseMode === 'pointer') updateTerminalCursorPosition();
+      terminalCellCursor.style.display = active ? 'block' : 'none';
+      if (active) updateTerminalCursorPosition();
     }
     if (active) {
+      if (currentMouseMode === 'pointer') updatePointerModeDesc();
       updateSelectionStatus();
     }
     logDebug('MOUSE_MODE', `active=${active} mode=${currentMouseMode}`);
@@ -2695,74 +2834,191 @@
     const termContainer = document.getElementById('terminal-container');
     if (!termContainer) return;
 
-    const termWidth = termContainer.clientWidth;
-    const termHeight = termContainer.clientHeight;
+    let cellW = 9;
+    let cellH = 17;
+    const screenEl = term.element ? (term.element.querySelector('.xterm-screen') || term.element) : null;
     const cols = term.cols || 80;
     const rows = term.rows || 24;
-    const cellW = termWidth / cols;
-    const cellH = termHeight / rows;
 
-    terminalCellCursor.style.width = `${Math.max(6, cellW)}px`;
-    terminalCellCursor.style.height = `${Math.max(12, cellH)}px`;
-    terminalCellCursor.style.left = `${(mousePointerCol - 1) * cellW + 4}px`;
-    terminalCellCursor.style.top = `${(mousePointerRow - 1) * cellH + 2}px`;
+    if (screenEl) {
+      const rect = screenEl.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        cellW = rect.width / cols;
+        cellH = rect.height / rows;
+      }
+    } else {
+      cellW = termContainer.clientWidth / cols;
+      cellH = termContainer.clientHeight / rows;
+    }
+
+    const colIndex = Math.max(0, Math.min(cols - 1, mousePointerCol - 1));
+    const rowIndex = Math.max(0, Math.min(rows - 1, mousePointerRow - 1));
+
+    let offsetLeft = termContainer.offsetLeft || 0;
+    let offsetTop = termContainer.offsetTop || 0;
+    if (screenEl) {
+      const cRect = termContainer.getBoundingClientRect();
+      const sRect = screenEl.getBoundingClientRect();
+      offsetLeft = (sRect.left - cRect.left) + (termContainer.offsetLeft || 0);
+      offsetTop = (sRect.top - cRect.top) + (termContainer.offsetTop || 0);
+    }
+
+    terminalCellCursor.style.width = `${Math.max(4, Math.round(cellW))}px`;
+    terminalCellCursor.style.height = `${Math.max(8, Math.round(cellH))}px`;
+    terminalCellCursor.style.left = `${Math.round(offsetLeft + colIndex * cellW)}px`;
+    terminalCellCursor.style.top = `${Math.round(offsetTop + rowIndex * cellH)}px`;
   }
 
   // SGR Mouse reporting: \x1b[<button;col;rowM (down), \x1b[<button;col;rowm (up)
-  function sendTerminalClick(button = 0) {
+  function sendTerminalClick(button = 0, force = false) {
     const col = Math.max(1, Math.min(term ? term.cols : 80, mousePointerCol));
     const row = Math.max(1, Math.min(term ? term.rows : 24, mousePointerRow));
+    if (!force && !isAppMouseTrackingActive()) {
+      logDebug('MOUSE_CLICK', `Ignored click btn=${button} (mouse tracking not active)`);
+      return false;
+    }
+    const cms = term && term._core && term._core.coreMouseService;
+    if (cms && cms.areMouseEventsActive) {
+      cms.triggerMouseEvent({ col: col - 1, row: row - 1, x: 0, y: 0, button: button, action: 1 });
+      cms.triggerMouseEvent({ col: col - 1, row: row - 1, x: 0, y: 0, button: button, action: 0 });
+      logDebug('MOUSE_CLICK', `cms btn=${button} (${col},${row})`);
+      return true;
+    }
     const downSeq = `\x1b[<${button};${col};${row}M`;
     const upSeq = `\x1b[<${button};${col};${row}m`;
     sendInput(downSeq + upSeq);
-    logDebug('MOUSE_CLICK', `btn=${button} (${col},${row})`);
+    logDebug('MOUSE_CLICK', `sgr btn=${button} (${col},${row})`);
+    return true;
   }
 
-  function sendTerminalWheel(direction = 'up') {
+  function sendTerminalWheel(direction = 'up', force = false) {
     const col = Math.max(1, Math.min(term ? term.cols : 80, mousePointerCol));
     const row = Math.max(1, Math.min(term ? term.rows : 24, mousePointerRow));
     const btn = direction === 'up' ? 64 : 65;
-    sendInput(`\x1b[<${btn};${col};${row}M`);
-    if (term) {
-      term.scrollLines(direction === 'up' ? -SCROLL_AMOUNT : SCROLL_AMOUNT);
-      updateScrollButtonState();
+    if (isAppMouseTrackingActive() || force) {
+      const cms = term && term._core && term._core.coreMouseService;
+      if (cms && cms.areMouseEventsActive) {
+        cms.triggerMouseEvent({ col: col - 1, row: row - 1, x: 0, y: 0, button: 4, action: direction === 'up' ? 0 : 1 });
+      } else {
+        sendInput(`\x1b[<${btn};${col};${row}M`);
+      }
+      logDebug('MOUSE_WHEEL', `dir=${direction} (${col},${row})`);
+    } else {
+      if (term) {
+        term.scrollLines(direction === 'up' ? -SCROLL_AMOUNT : SCROLL_AMOUNT);
+        updateScrollButtonState();
+      }
     }
   }
 
+  function toggleLeftButtonLatch() {
+    isLeftButtonLatched = !isLeftButtonLatched;
+    if (touchpadBtnLeft) {
+      touchpadBtnLeft.classList.toggle('latched', isLeftButtonLatched);
+      touchpadBtnLeft.classList.toggle('pressed', isLeftButtonLatched);
+      touchpadBtnLeft.textContent = isLeftButtonLatched ? 'L [ON]' : 'L';
+    }
+    if (touchpadSurface) {
+      touchpadSurface.classList.toggle('selecting', isLeftButtonLatched);
+    }
+    if (isLeftButtonLatched) {
+      const bRow = (term?.buffer?.active?.viewportY || 0) + (mousePointerRow - 1);
+      selectionAnchor = { col: mousePointerCol - 1, row: mousePointerRow - 1, bufferRow: bRow };
+      selectionHead = { ...selectionAnchor };
+      applySelectionRange(selectionAnchor, selectionHead);
+    }
+    updateSelectionStatus();
+  }
+
   if (touchpadBtnLeft) {
-    touchpadBtnLeft.addEventListener('click', (e) => {
+    let leftBtnDownTime = 0;
+    touchpadBtnLeft.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      sendTerminalClick(0);
+      leftBtnDownTime = Date.now();
+      isLeftButtonHeld = true;
+    });
+
+    touchpadBtnLeft.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      const holdDuration = Date.now() - leftBtnDownTime;
+      isLeftButtonHeld = false;
+      if (currentMouseMode === 'select') {
+        if (holdDuration < 300) {
+          toggleLeftButtonLatch();
+        } else {
+          updateSelectionStatus();
+        }
+      } else {
+        sendTerminalClick(0);
+      }
+    });
+
+    touchpadBtnLeft.addEventListener('pointercancel', () => {
+      isLeftButtonHeld = false;
     });
   }
 
   if (touchpadBtnRight) {
     touchpadBtnRight.addEventListener('click', (e) => {
       e.preventDefault();
-      sendTerminalClick(2);
+      if (currentMouseMode === 'select') {
+        resetMouseInteractionState();
+        if (term && term.clearSelection) {
+          term.clearSelection();
+          updateSelectionStatus();
+        }
+      } else {
+        sendTerminalClick(2);
+      }
     });
   }
 
   let isTrackingPointer = false;
+  let trackStartX = 0;
+  let trackStartY = 0;
   let trackLastX = 0;
   let trackLastY = 0;
   let trackStartTime = 0;
   let totalMovedDist = 0;
+  let accumulatedDx = 0;
+  let accumulatedDy = 0;
+  let accumulatedScrollDy = 0;
 
   if (touchpadSurface) {
     touchpadSurface.addEventListener('pointerdown', (e) => {
       touchpadSurface.setPointerCapture(e.pointerId);
       isTrackingPointer = true;
+      trackStartX = e.clientX;
+      trackStartY = e.clientY;
       trackLastX = e.clientX;
       trackLastY = e.clientY;
       trackStartTime = Date.now();
       totalMovedDist = 0;
+      accumulatedDx = 0;
+      accumulatedDy = 0;
+      accumulatedScrollDy = 0;
 
       const rect = touchpadSurface.getBoundingClientRect();
       if (touchpadPointer) {
         touchpadPointer.style.display = 'block';
         touchpadPointer.style.left = `${e.clientX - rect.left}px`;
         touchpadPointer.style.top = `${e.clientY - rect.top}px`;
+      }
+
+      if (currentMouseMode === 'select' && !isLeftButtonLatched && !isLeftButtonHeld) {
+        if (tapHoldTimer) clearTimeout(tapHoldTimer);
+        tapHoldTimer = setTimeout(() => {
+          if (isTrackingPointer && totalMovedDist < 12) {
+            isTapAndHoldSelecting = true;
+            touchpadSurface.classList.add('selecting');
+            const bRow = (term?.buffer?.active?.viewportY || 0) + (mousePointerRow - 1);
+            selectionAnchor = { col: mousePointerCol - 1, row: mousePointerRow - 1, bufferRow: bRow };
+            selectionHead = { ...selectionAnchor };
+            applySelectionRange(selectionAnchor, selectionHead);
+            updateSelectionStatus();
+            try { if (navigator.vibrate) navigator.vibrate(25); } catch {}
+          }
+        }, 300);
       }
     });
 
@@ -2774,20 +3030,10 @@
       trackLastY = e.clientY;
       totalMovedDist += Math.abs(dx) + Math.abs(dy);
 
-      const maxCols = term ? term.cols : 80;
-      const maxRows = term ? term.rows : 24;
-
-      const colChange = Math.round(dx / 4);
-      const rowChange = Math.round(dy / 6);
-
-      if (colChange !== 0) {
-        mousePointerCol = Math.max(1, Math.min(maxCols, mousePointerCol + colChange));
+      if (totalMovedDist > 12 && tapHoldTimer) {
+        clearTimeout(tapHoldTimer);
+        tapHoldTimer = null;
       }
-      if (rowChange !== 0) {
-        mousePointerRow = Math.max(1, Math.min(maxRows, mousePointerRow + rowChange));
-      }
-
-      updateCoordsDisplay();
 
       const rect = touchpadSurface.getBoundingClientRect();
       if (touchpadPointer) {
@@ -2796,19 +3042,138 @@
         touchpadPointer.style.left = `${px}px`;
         touchpadPointer.style.top = `${py}px`;
       }
+
+      const isSelecting = isLeftButtonLatched || isLeftButtonHeld || isTapAndHoldSelecting;
+
+      if (currentMouseMode === 'select' && isSelecting) {
+        accumulatedDx += dx;
+        accumulatedDy += dy;
+
+        const maxCols = term ? term.cols : 80;
+        const maxRows = term ? term.rows : 24;
+        const SENSITIVITY_X = 6;
+        const SENSITIVITY_Y = 12;
+
+        const colDelta = Math.trunc(accumulatedDx / SENSITIVITY_X);
+        const rowDelta = Math.trunc(accumulatedDy / SENSITIVITY_Y);
+
+        if (colDelta !== 0) {
+          accumulatedDx -= colDelta * SENSITIVITY_X;
+          mousePointerCol = Math.max(1, Math.min(maxCols, mousePointerCol + colDelta));
+        }
+
+        if (rowDelta !== 0) {
+          accumulatedDy -= rowDelta * SENSITIVITY_Y;
+          const nextRow = mousePointerRow + rowDelta;
+          if (nextRow < 1) {
+            if (term) term.scrollLines(-1);
+            mousePointerRow = 1;
+          } else if (nextRow > maxRows) {
+            if (term) term.scrollLines(1);
+            mousePointerRow = maxRows;
+          } else {
+            mousePointerRow = nextRow;
+          }
+        }
+
+        updateCoordsDisplay();
+
+        if (selectionAnchor) {
+          const bRow = (term?.buffer?.active?.viewportY || 0) + (mousePointerRow - 1);
+          selectionHead = { col: mousePointerCol - 1, row: mousePointerRow - 1, bufferRow: bRow };
+          applySelectionRange(selectionAnchor, selectionHead);
+          updateSelectionStatus();
+        }
+        return;
+      }
+
+      // Not selecting: check for vertical swipe / scroll track vs cursor movement
+      const isRightEdgeTrack = (trackStartX - rect.left) > (rect.width * 0.75);
+      const isFastVerticalSwipe = Math.abs(dy) > Math.abs(dx) * 2 && Math.abs(dy) >= 12;
+
+      if (isRightEdgeTrack || isFastVerticalSwipe) {
+        accumulatedScrollDy += dy;
+        const SCROLL_THRESHOLD = 16;
+        if (Math.abs(accumulatedScrollDy) >= SCROLL_THRESHOLD) {
+          const lines = Math.sign(accumulatedScrollDy) * Math.max(1, Math.round(Math.abs(accumulatedScrollDy) / SCROLL_THRESHOLD));
+          accumulatedScrollDy = 0;
+          if (currentMouseMode === 'pointer' && isAppMouseTrackingActive()) {
+            sendTerminalWheel(dy < 0 ? 'down' : 'up');
+          } else if (term) {
+            term.scrollLines(dy > 0 ? -lines : lines);
+            updateScrollButtonState();
+          }
+        }
+        return;
+      }
+
+      // Normal cursor movement
+      accumulatedDx += dx;
+      accumulatedDy += dy;
+
+      const maxCols = term ? term.cols : 80;
+      const maxRows = term ? term.rows : 24;
+      const SENSITIVITY_X = 6;
+      const SENSITIVITY_Y = 12;
+
+      const colDelta = Math.trunc(accumulatedDx / SENSITIVITY_X);
+      const rowDelta = Math.trunc(accumulatedDy / SENSITIVITY_Y);
+
+      if (colDelta !== 0) {
+        accumulatedDx -= colDelta * SENSITIVITY_X;
+        mousePointerCol = Math.max(1, Math.min(maxCols, mousePointerCol + colDelta));
+      }
+
+      if (rowDelta !== 0) {
+        accumulatedDy -= rowDelta * SENSITIVITY_Y;
+        const nextRow = mousePointerRow + rowDelta;
+        if (nextRow < 1) {
+          if (term) term.scrollLines(-1);
+          mousePointerRow = 1;
+        } else if (nextRow > maxRows) {
+          if (term) term.scrollLines(1);
+          mousePointerRow = maxRows;
+        } else {
+          mousePointerRow = nextRow;
+        }
+      }
+
+      updateCoordsDisplay();
     });
 
     function endPointerTracking(e) {
       if (!isTrackingPointer) return;
       isTrackingPointer = false;
+      if (tapHoldTimer) {
+        clearTimeout(tapHoldTimer);
+        tapHoldTimer = null;
+      }
       try { touchpadSurface.releasePointerCapture(e.pointerId); } catch {}
       if (touchpadPointer) {
         touchpadPointer.style.display = 'none';
       }
 
+      if (isTapAndHoldSelecting) {
+        isTapAndHoldSelecting = false;
+        touchpadSurface.classList.remove('selecting');
+        updateSelectionStatus();
+        return;
+      }
+
       const elapsed = Date.now() - trackStartTime;
-      if (elapsed < 300 && totalMovedDist < 10) {
-        sendTerminalClick(0);
+      if (elapsed < 250 && totalMovedDist < 8) {
+        if (currentMouseMode === 'select') {
+          if (term && term.hasSelection && term.hasSelection()) {
+            term.clearSelection();
+            selectionAnchor = null;
+            selectionHead = null;
+            updateSelectionStatus();
+          }
+        } else {
+          if (isAppMouseTrackingActive()) {
+            sendTerminalClick(0);
+          }
+        }
       }
     }
 
@@ -2965,6 +3330,31 @@
     return extractCleanResponseFromLines(lines);
   }
 
+  function showClipboardFallbackModal(text) {
+    let modal = document.getElementById('clipboard-fallback-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'clipboard-fallback-modal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-box" style="max-width:320px;">
+          <div class="modal-title" style="font-size:13px; color:#58a6ff;">Clipboard Notice</div>
+          <div class="modal-desc" style="font-size:12px; margin-bottom:8px;">Clipboard permission unavailable. You can copy the text below:</div>
+          <textarea id="clipboard-fallback-text" class="input-box" style="width:100%; height:80px; font-size:11px; font-family:monospace; margin-bottom:8px;" readonly></textarea>
+          <button id="btn-close-clip-modal" class="btn btn-primary" style="width:100%;">Done</button>
+        </div>`;
+      document.body.appendChild(modal);
+      document.getElementById('btn-close-clip-modal').onclick = () => { modal.style.display = 'none'; };
+    }
+    const ta = document.getElementById('clipboard-fallback-text');
+    if (ta) {
+      ta.value = text;
+      modal.style.display = 'flex';
+      ta.focus();
+      ta.select();
+    }
+  }
+
   // COPY LAST Handler
   async function triggerCopyLast() {
     if (!currentSessionId) return;
@@ -3009,47 +3399,24 @@
         return;
       }
 
-      let copied = false;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        try {
-          await navigator.clipboard.writeText(textToCopy);
-          copied = true;
-        } catch (clipErr) {
-          console.warn('[CLIPBOARD] writeText error, attempting fallback:', clipErr);
-        }
-      }
-
-      if (!copied) {
-        try {
-          const ta = document.createElement('textarea');
-          ta.value = textToCopy;
-          ta.style.position = 'fixed';
-          ta.style.opacity = '0';
-          ta.style.left = '-9999px';
-          document.body.appendChild(ta);
-          ta.focus();
-          ta.select();
-          copied = document.execCommand('copy');
-          document.body.removeChild(ta);
-        } catch (e) {
-          console.warn('[CLIPBOARD] execCommand error:', e);
-        }
-      }
+      const copied = await copyTextToClipboard(textToCopy);
 
       if (copied) {
         logDebug('COPY_LAST', `Copied ${textToCopy.length} chars to clipboard`);
         if (keyCopyLast) {
           keyCopyLast.classList.add('copied');
-          keyCopyLast.innerHTML = checkIconSvg;
           setTimeout(() => {
             if (keyCopyLast) {
               keyCopyLast.classList.remove('copied');
-              keyCopyLast.innerHTML = copyIconSvg;
             }
-          }, 1500);
+          }, 1200);
+        }
+        if (selectionStatusText) {
+          selectionStatusText.textContent = `✓ Copied ${textToCopy.length} chars!`;
         }
       } else {
-        logDebug('CLIP_FAIL', 'Clipboard permission unavailable');
+        logDebug('CLIP_FAIL', 'Clipboard permission unavailable; showing manual fallback');
+        showClipboardFallbackModal(textToCopy);
       }
     } catch (err) {
       logDebug('COPY_ERR', err.message);
