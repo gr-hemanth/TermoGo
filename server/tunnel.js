@@ -1,7 +1,8 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stopProcessTree } from './lifecycle.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -27,6 +28,16 @@ export function findCloudflaredBinary() {
 
   // Fallback to searching PATH
   return 'cloudflared';
+}
+
+export function isCloudflaredAvailable() {
+  const binary = findCloudflaredBinary();
+  try {
+    const res = spawnSync(binary, ['--version'], { windowsHide: true, timeout: 3000 });
+    return res.status === 0;
+  } catch {
+    return false;
+  }
 }
 
 export function startTunnel({ port = 8787, host = '127.0.0.1' } = {}) {
@@ -88,17 +99,16 @@ export function startTunnel({ port = 8787, host = '127.0.0.1' } = {}) {
   });
 
   const cleanup = () => {
-    if (tunnelProcess && !tunnelProcess.killed) {
+    if (tunnelProcess && tunnelProcess.pid) {
       try {
-        tunnelProcess.kill('SIGTERM');
+        stopProcessTree(tunnelProcess.pid);
       } catch {
         // Process might have already exited
       }
     }
   };
 
-  process.once('SIGINT', cleanup);
-  process.once('SIGTERM', cleanup);
+  // Exit hook as safety net; signal handling is coordinated centrally by TermBridge lifecycle
   process.once('exit', cleanup);
 
   // Set a 30s timeout for tunnel URL acquisition
@@ -118,6 +128,7 @@ export function startTunnel({ port = 8787, host = '127.0.0.1' } = {}) {
       cleanup();
     },
     getProcess: () => tunnelProcess,
+    getPid: () => tunnelProcess?.pid || null,
     getUrl: () => tunnelUrl
   };
 }

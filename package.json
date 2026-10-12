@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "node server/index.js",
+    "launch": "node server/launcher.js",
     "stop": "node server/stop.js",
     "dev": "node server/index.js",
     "local": "node server/index.js",
-    "test": "node tests/test-termbridge.js && node tests/test-extractor-suite.js && node tests/test-mobile-ui-ux.js && node tests/test-fidelity-latency.js && node tests/test-scrolling-controls.js && node tests/test-responsive-layout.js && node tests/test-essentials-keyboard-mouse.js && node tests/test-mouse-touchpad-integration.js && node tests/test-security-reliability.js"
+    "test": "node tests/test-termbridge.js && node tests/test-extractor-suite.js && node tests/test-mobile-ui-ux.js && node tests/test-fidelity-latency.js && node tests/test-scrolling-controls.js && node tests/test-responsive-layout.js && node tests/test-essentials-keyboard-mouse.js && node tests/test-mouse-touchpad-integration.js && node tests/test-security-reliability.js && node tests/test-lifecycle.js && node tests/test-token-display.js && node tests/test-launcher-flow.js"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",
