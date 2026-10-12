@@ -1,123 +1,263 @@
-# TermBridge ⚡
+# TermoGo
 
-TermBridge is a mobile-first, browser-based remote terminal system for controlling AGY and persistent Windows terminal sessions directly from your phone over local Wi-Fi or the internet.
+**Control your Windows terminal from your phone. Anywhere.**
 
----
+TermoGo is a mobile-friendly terminal control application that lets you access and interact with terminal sessions running on your Windows laptop through a web browser on your phone.
 
-## 🚀 One-Click Quick Start (Windows)
+Use the same Wi-Fi network for local access or Cloudflare Tunnel for remote access. Run commands, interact with terminal-based tools, navigate output, and control your sessions without sitting in front of your laptop.
 
-No PowerShell troubleshooting, manual port finding, or complex commands needed.
+> **Important:** TermoGo provides access to a real terminal on your computer. Anyone who gains unauthorized access may be able to execute commands on your machine. Keep your access token private and share access only with trusted people.
 
-### 1. Launch TermBridge
-Double-click **`Start-TermBridge.bat`** in the project folder (or run `npm run launch`).
+## Features
 
-The launcher automatically:
-- Checks that Node.js, npm, and project dependencies are available (installs missing packages if needed).
-- Verifies and repairs your configuration (`.env`) preserving your stable access token.
-- Dynamically detects your laptop's real Wi-Fi IP address (strictly excluding virtual adapters like WARP and WSL).
-- Presents a clear, 1-click startup menu.
+- **Mobile terminal access** — Control your Windows terminal through your phone's browser.
+- **Local and remote connectivity** — Connect over Wi-Fi or use Cloudflare Tunnel to access your laptop from another network.
+- **Persistent terminal sessions** — Sessions can continue running when the phone disconnects, while TermoGo remains running.
+- **Mobile-optimized controls** — Dedicated STOP, COPY LAST, scroll up, scroll down, and terminal navigation controls.
+- **Virtual keyboard** — Send keyboard input, special keys, and key combinations from your phone.
+- **Touchpad and mouse modes** — Interact with terminal applications and select terminal text.
+- **Terminal output and history** — View existing output and navigate scrollback.
+- **Session management** — Create, access, and delete terminal sessions.
+- **Authentication and security controls** — Access-token verification, rate limiting, origin validation, and authenticated WebSocket communication.
+- **One-click Windows launchers** — Start or stop the application using `.bat` files instead of remembering commands.
+- **Port conflict handling** — Detect existing instances and avoid terminating unrelated processes.
 
-### 2. Choose Your Connection Mode
+## How it works
+
+TermoGo runs on your Windows laptop, where the terminal processes execute. Your phone acts as the remote interface.
 
 ```text
-============================================================
-               TERMBRIDGE STARTUP LAUNCHER
-============================================================
-Detected Wi-Fi / LAN IP:  10.3.40.157
-Cloudflare Tunnel:        Installed & Ready
-------------------------------------------------------------
-Select connection mode:
-  [1] Local Wi-Fi   (Phone on same Wi-Fi / LAN - Fast & Direct)
-  [2] Remote Access (Cloudflare Tunnel - Anywhere / Mobile Data)
-  [3] Stop TermBridge
-  [4] Exit
-------------------------------------------------------------
-Enter choice [1-4] (default: 1):
+┌─────────────────────┐
+│     Your Phone      │
+│    Web Browser      │
+└──────────┬──────────┘
+           │
+           │ Local Wi-Fi
+           │       OR
+           │ Cloudflare Tunnel
+           ▼
+┌─────────────────────┐
+│   TermoGo Server    │
+│ Authentication      │
+│ WebSocket / API     │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│ Windows Terminal    │
+│ PowerShell / Shell  │
+│ Commands and Tools  │
+└─────────────────────┘
 ```
 
-- **Option 1 — Local Wi-Fi**: Best when your phone and laptop share the same Wi-Fi. Lowest latency, completely local.
-- **Option 2 — Remote Access**: Exposes TermBridge over Cloudflare Tunnel (`trycloudflare.com`). Control your laptop from your phone over 4G/5G mobile data or outside networks with zero router configuration.
-- **Option 3 — Stop TermBridge**: Gracefully stops the running instance, closes tunnels, and releases port 8787.
+Terminal commands execute on the laptop, not on the phone. Disconnecting the phone does not necessarily terminate the running terminal session.
 
-### 3. Connect from Your Phone
-Once started, the laptop console displays:
-- **Local URL**: `http://localhost:8787` (automatically opens in your default browser)
-- **LAN URL**: `http://<your-laptop-wifi-ip>:8787`
-- **ACCESS TOKEN**: Your persistent pairing token (stored safely in `.env`)
-- **QR Code**: Scan with your phone camera to open the interface immediately!
+## Requirements
 
-On your phone:
-1. Scan the QR code or navigate to `http://<your-laptop-wifi-ip>:8787` in your mobile browser.
-2. Enter the **ACCESS TOKEN** displayed on your laptop terminal.
-3. Tap **Authenticate** (or press Enter). You now have full touch control of PowerShell, AGY, and other terminal sessions!
+- Windows 10 or Windows 11.
+- Node.js 20.x or a compatible version.
+- npm, included with Node.js.
+- A modern web browser on your phone.
+- A Wi-Fi network for local access.
+- Cloudflare Tunnel (`cloudflared`) for remote access, if you choose that mode.
 
----
+## Getting started
 
-## 🛑 Clean Shutdown
+### 1. Clone the repository
 
-To stop TermBridge and guarantee all listener ports and tunnel processes are released:
-- Double-click **`Stop-TermBridge.bat`**, OR
-- Press **Ctrl+C** in the running server window, OR
-- Run `npm run stop` in terminal.
+Open PowerShell and run:
 
-TermBridge safely shuts down its child PTYs and Cloudflare Tunnel process without terminating unrelated Node.js or system processes.
-
----
-
-## 🛡️ Windows Firewall Setup (One-Time for Local Wi-Fi)
-
-To allow your phone to connect over local Wi-Fi, Windows Firewall must allow incoming TCP traffic on port 8787.
-
-Open **PowerShell as Administrator** and run:
 ```powershell
-netsh advfirewall firewall add rule name="TermBridge" dir=in action=allow protocol=TCP localport=8787
+git clone https://github.com/gr-hemanth/TermoGo.git
+cd TermoGo
 ```
 
-*Note: This is only required for Option 1 (Local Wi-Fi). Option 2 (Remote Cloudflare Tunnel) uses outbound TLS connections and works automatically without firewall rules or port forwarding.*
+If the repository has a different URL, substitute your repository's URL.
 
----
+### 2. Install dependencies
 
-## 🌟 Key Features
-
-1. **Persistent Terminal Sessions**:
-   - Terminal processes run continuously on your laptop, decoupled from browser connections.
-   - Closing the mobile browser, phone sleep, or network switches **never** kills the laptop terminal.
-   - Rolling **Scrollback Ring Buffer (128 KB)**: Live screen state and output history are instantly restored on reconnect.
-
-2. **Laptop-Style Virtual Keyboard & Touchpad**:
-   - Quick-access touch panel: `ESC`, `TAB`, `CTRL`, `ALT`, `SHIFT`, `CAPS`, arrow keys, function keys.
-   - Dedicated touchpad overlay with text selection and copy modes.
-   - Command/prompt bar for pasting long scripts, URLs, or prompts directly.
-
-3. **Multi-Terminal Dashboard**:
-   - Create and switch between multiple named terminal sessions (`PowerShell`, `AGY`, etc.).
-   - Visual card list with live status indicators and safe session termination.
-
-4. **Robust Port & Process Management**:
-   - Detects port 8787 status before starting.
-   - If TermBridge is already running, opens the browser directly instead of failing with `EADDRINUSE`.
-   - Never kills unrelated processes occupying port 8787.
-
----
-
-## ⚙️ Configuration (`.env`)
-
-TermBridge preserves your configuration across restarts:
-```env
-PORT=8787
-HOST=0.0.0.0
-# Set TUNNEL=true for internet access, or false for local Wi-Fi:
-TUNNEL=false
-# Persistent 32-character authentication token:
-AUTH_TOKEN=your-stable-access-token
+```powershell
+npm install
 ```
 
----
+The Windows launcher can also check dependencies and install them when necessary.
 
-## 🧪 Verification & Testing
+### 3. Start TermoGo
 
-Run the automated test suite covering lifecycle, token stability, networking, and UI UX:
-```bash
+Double-click:
+
+```text
+Start-TermBridge.bat
+```
+
+Despite the launcher's filename, the application is named **TermoGo**.
+
+Choose one of the modes from the startup menu:
+
+| Mode | When to use it |
+|---|---|
+| Local Wi-Fi | Your phone and laptop are connected to the same network. |
+| Remote Access | Your phone connects through another Wi-Fi network or mobile data. |
+| Stop TermoGo | Stops the running application through its shutdown mechanism. |
+
+Keep the server window open while you use the application. The launcher displays the relevant connection URL and status information.
+
+### 4. Authenticate
+
+Open the URL displayed by the launcher on your phone.
+
+Enter the current access token when prompted. Obtain it from the trusted local startup output or your local configuration, as appropriate.
+
+Do not share your token publicly, commit it to Git, or include it in screenshots or public bug reports.
+
+## Connecting from your phone
+
+### Option A — Local Wi-Fi
+
+1. Start TermoGo and select **Local Wi-Fi**.
+2. Make sure your phone and laptop are connected to the same network.
+3. Open the LAN URL displayed by the launcher on your phone.
+4. Authenticate and select your terminal session.
+
+Use the laptop's displayed LAN IP address rather than `localhost`. The LAN address may change when your laptop reconnects to Wi-Fi.
+
+If the website does not load, check that the server is running and that Windows Firewall permits the necessary local-network connection. Some campus and public Wi-Fi networks prevent devices from communicating directly.
+
+### Option B — Remote Access
+
+1. Install and configure Cloudflare Tunnel if it is not already available.
+2. Start TermoGo and select **Remote Access**.
+3. Wait for the tunnel to become ready.
+4. Open the actual HTTPS URL displayed by the launcher on your phone.
+5. Authenticate with your access token.
+
+Your laptop must remain powered on, connected to the internet, and running TermoGo and its tunnel process.
+
+Do not assume the remote URL stays the same between runs. Use the current URL printed by the launcher.
+
+## Using the mobile controls
+
+| Control | Purpose |
+|---|---|
+| **STOP** | Stops the current foreground command or process using the application's stop behavior. |
+| **COPY LAST** | Copies the most recent command interaction and its output. |
+| **UP / DOWN** | Navigates terminal scrollback without sending those actions as shell input. |
+| **Essentials** | Opens additional keyboard and mouse controls. |
+| **Virtual Keyboard** | Sends keyboard input, including supported special keys and combinations. |
+| **Mouse / Touchpad** | Interacts with supported terminal interfaces or selects terminal text, depending on the active mode. |
+
+The behavior of terminal applications varies. Some full-screen terminal programs handle mouse input differently from a normal shell.
+
+## Stopping TermoGo
+
+Double-click:
+
+```text
+Stop-TermBridge.bat
+```
+
+Alternatively, run the project's stop script from PowerShell:
+
+```powershell
+npm run stop
+```
+
+Use the project's graceful shutdown mechanism instead of manually killing arbitrary Node.js processes.
+
+Stopping the server may terminate the terminal sessions it owns. Disconnecting the phone, by itself, should not be treated as a shutdown command.
+
+## Configuration
+
+The repository includes `.env.example` as a configuration template.
+
+The application uses environment configuration for settings such as authentication and tunnel behavior. A local `.env` file may be generated or maintained during startup.
+
+- Keep `.env` local and out of version control.
+- Never commit your real access token or other secrets.
+- Do not replace a valid token merely to troubleshoot a network issue.
+- Use the configuration template to understand available settings.
+- Review security-sensitive changes before enabling remote access.
+
+## Security
+
+TermoGo provides control of an actual terminal, so security is essential.
+
+- Keep authentication enabled for local and remote access.
+- Protect your access token as you would a password.
+- Share access only with people you trust.
+- Avoid exposing port `8787` directly to the public internet.
+- Use appropriately scoped firewall rules for local access.
+- Keep your dependencies and Node.js installation maintained.
+- Do not commit `.env` files, credentials, runtime state, or private logs.
+- Stop remote access when you no longer need it.
+
+Remote access should be treated as privileged access to your laptop, not merely access to a website.
+
+## Development
+
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Run the test suite:
+
+```powershell
 npm test
 ```
-All 12 test suites run automated end-to-end assertions with zero external test runners required.
+
+The project's test suite covers terminal behavior, mobile controls, scrolling, keyboard and mouse interactions, authentication, security, process lifecycle management, token handling, and launcher behavior.
+
+Run tests against your local code before submitting changes. A passing automated suite does not replace testing the application on an actual phone and network.
+
+## Troubleshooting
+
+**The website does not open**
+
+Confirm the server started successfully. For local access, use the current LAN URL printed by the launcher. For remote access, wait until the tunnel reports a valid URL.
+
+**The server reports that port `8787` is occupied**
+
+Determine which process owns the port. Reuse an existing healthy TermoGo instance where appropriate; do not terminate unrelated applications.
+
+**Authentication fails**
+
+Use the current access token from the local startup output or trusted local configuration. Check the server logs for authentication errors, but do not publish tokens or secret values.
+
+**Local access works, but remote access fails**
+
+Check that Cloudflare Tunnel is installed, configured, and running. Use the actual current HTTPS URL and confirm the laptop still has internet access.
+
+**The terminal stops responding**
+
+Check the server window for errors and verify that the session still exists. Avoid terminating the server abruptly unless graceful shutdown is unavailable.
+
+## Contributing
+
+Contributions, bug reports, and feature suggestions are welcome.
+
+Before submitting changes:
+
+1. Describe the problem or improvement.
+2. Keep changes focused and logically separated.
+3. Run `npm test`.
+4. Avoid committing secrets or machine-specific configuration.
+5. Include reproducible steps for bugs, especially those involving mobile devices or remote connectivity.
+
+## Project status
+
+TermoGo includes Windows launchers, local and remote connectivity options, mobile terminal controls, session management, and automated tests.
+
+The project is intended to make controlling a laptop's terminal from a phone simpler and more practical.
+
+---
+
+**TermoGo - Your terminal, in your pocket.**
+## Author
+
+**G R HEMANTH** - Creator and Maintainer of TermoGo.
+
+GitHub: [@gr-hemanth](https://github.com/your-username)
+
+TermoGo is developed and maintained as a project to make remote terminal interaction more accessible through a mobile-friendly interface.
