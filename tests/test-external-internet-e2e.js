@@ -9,7 +9,8 @@ const testPort = 8788;
 const appInstance = await startServer({
   port: testPort,
   host: '127.0.0.1',
-  enableTunnel: true
+  enableTunnel: true,
+  authToken: 'test-e2e-internet-token-12345'
 });
 
 const token = appInstance.token;

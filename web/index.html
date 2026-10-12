@@ -1424,8 +1424,9 @@
   <div class="modal-box">
     <div class="modal-title">Authentication Required</div>
     <div class="modal-desc">Enter the laptop pairing access token printed on your laptop terminal.</div>
-    <input id="auth-token-input" class="input-box" type="password" placeholder="Access token" />
+    <input id="auth-token-input" class="input-box" type="password" placeholder="Access token" autocomplete="current-password" />
     <button id="btn-submit-token" class="btn btn-primary" style="height:36px;">Authenticate</button>
+    <div id="auth-error-msg" style="display:none; color:#f85149; font-size:12px; margin-top:8px; line-height:1.4; text-align:center;"></div>
   </div>
 </div>
 
@@ -1451,14 +1452,19 @@
   const FitAddon = window.FitAddon ? window.FitAddon.FitAddon : null;
 
   // --- Auth Token Extraction ---
+  function cleanToken(t) {
+    if (!t || typeof t !== 'string') return '';
+    return t.trim().replace(/^["']|["']$/g, '').trim();
+  }
+
   function extractToken() {
     // 1. From URL hash (#token=...)
     if (location.hash && location.hash.includes('token=')) {
       const match = location.hash.match(/token=([^&]+)/);
       if (match) {
-        const t = decodeURIComponent(match[1]);
+        const t = cleanToken(decodeURIComponent(match[1]));
         try { localStorage.setItem('termbridge-token', t); } catch {}
-        history.replaceState(null, '', location.pathname + location.search);
+        history.replaceState(null, '', location.pathname);
         logDebug('TOKEN_PRESENT=true', `TOKEN_LENGTH=${t.length} (from hash)`);
         return t;
       }
@@ -1466,16 +1472,18 @@
     // 2. From URL search params (?token=...)
     const params = new URLSearchParams(location.search);
     if (params.get('token')) {
-      const t = params.get('token');
+      const t = cleanToken(params.get('token'));
       try { localStorage.setItem('termbridge-token', t); } catch {}
+      history.replaceState(null, '', location.pathname);
       logDebug('TOKEN_PRESENT=true', `TOKEN_LENGTH=${t.length} (from query)`);
       return t;
     }
     // 3. From localStorage
     let stored = '';
     try { stored = localStorage.getItem('termbridge-token') || ''; } catch {}
-    logDebug(`TOKEN_PRESENT=${!!stored}`, `TOKEN_LENGTH=${stored.length} (from storage)`);
-    return stored;
+    const cleaned = cleanToken(stored);
+    logDebug(`TOKEN_PRESENT=${!!cleaned}`, `TOKEN_LENGTH=${cleaned.length} (from storage)`);
+    return cleaned;
   }
 
   let token = extractToken();
@@ -1571,7 +1579,7 @@
     logDebug('REST_STATUS', `HTTP ${res.status}`);
     if (res.status === 401) {
       logDebug('AUTH_FAIL', '401 Unauthorized. Showing token input.');
-      showAuthModal();
+      showAuthModal('Access token expired or invalid. Please re-enter the token displayed on your laptop terminal.');
       throw new Error('Unauthorized');
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1724,7 +1732,13 @@
   }
 
   function escapeHtml(str) {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (typeof str !== 'string') return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   // --- View Switching ---
@@ -1865,10 +1879,19 @@
     };
 
     ws.onclose = (e) => {
+      logDebug('WS_CLOSE', `code=${e.code} reason=${e.reason}`);
+      if (e.code === 4401) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+        updateStatus('disconnected', 'Auth Failed (401)');
+        logDebug('AUTH_FAIL', 'WebSocket authentication rejected. Showing auth modal.');
+        showAuthModal();
+        return;
+      }
+
       updateStatus('disconnected', 'Disconnected');
-      logDebug('WS_CLOSE', `code=${e.code}`);
       reconnectAttempts++;
-      const delay = Math.min(5000, 1000 * Math.pow(1.3, reconnectAttempts));
+      const delay = Math.min(10000, 1000 * Math.pow(1.3, reconnectAttempts));
       updateStatus('connecting', `Reconnecting (${Math.round(delay/1000)}s)…`);
       reconnectTimer = setTimeout(() => {
         if (currentSessionId === id && viewTerminal.style.display !== 'none') {
@@ -3190,6 +3213,11 @@
   function sendPrompt() {
     const val = promptInput.value;
     if (!val) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      logDebug('SEND_DROPPED', 'Terminal not connected; input preserved');
+      updateStatus('disconnected', 'Not connected');
+      return;
+    }
     const normalized = val.replace(/\r\n/g, '\r').replace(/\n/g, '\r');
     sendInput(normalized + '\r');
     promptInput.value = '';
@@ -3455,19 +3483,94 @@
   btnNewTerm.onclick = handleNewTerminal;
 
   // --- Auth Modal Handlers ---
-  function showAuthModal() {
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error-msg');
+    if (el) {
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  }
+
+  function clearAuthError() {
+    const el = document.getElementById('auth-error-msg');
+    if (el) {
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+  }
+
+  function showAuthModal(errMsg = '') {
+    if (errMsg) {
+      showAuthError(errMsg);
+    } else {
+      clearAuthError();
+    }
     authModal.style.display = 'flex';
+    authTokenInput.value = '';
     authTokenInput.focus();
   }
 
-  btnSubmitToken.onclick = () => {
-    const val = authTokenInput.value.trim();
-    if (!val) return;
-    token = val;
-    try { localStorage.setItem('termbridge-token', token); } catch {}
-    authModal.style.display = 'none';
-    bootstrap();
-  };
+  async function submitAuthToken() {
+    const rawVal = authTokenInput.value;
+    const cleaned = cleanToken(rawVal);
+    if (!cleaned) {
+      showAuthError('Please enter the access token.');
+      authTokenInput.focus();
+      return;
+    }
+
+    btnSubmitToken.disabled = true;
+    btnSubmitToken.textContent = 'Verifying...';
+    clearAuthError();
+
+    try {
+      const res = await fetch(`${base}/api/sessions`, {
+        headers: { 'x-auth-token': cleaned }
+      });
+
+      if (res.status === 401) {
+        showAuthError('Invalid access token. Please check the laptop terminal output.');
+        btnSubmitToken.disabled = false;
+        btnSubmitToken.textContent = 'Authenticate';
+        authTokenInput.focus();
+        return;
+      }
+
+      if (!res.ok) {
+        showAuthError(`Server error (HTTP ${res.status}). Please try again.`);
+        btnSubmitToken.disabled = false;
+        btnSubmitToken.textContent = 'Authenticate';
+        return;
+      }
+
+      const sessionsData = await res.json();
+      token = cleaned;
+      try { localStorage.setItem('termbridge-token', token); } catch {}
+      authModal.style.display = 'none';
+      btnSubmitToken.disabled = false;
+      btnSubmitToken.textContent = 'Authenticate';
+
+      renderTerminalsView(sessionsData);
+      if (sessionsData.length > 0) {
+        openSession(sessionsData[0].id, sessionsData[0].title);
+      } else {
+        showListView();
+      }
+    } catch (err) {
+      showAuthError('Connection failed: ' + (err.message || 'Check network connection'));
+      btnSubmitToken.disabled = false;
+      btnSubmitToken.textContent = 'Authenticate';
+    }
+  }
+
+  btnSubmitToken.onclick = submitAuthToken;
+
+  authTokenInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitAuthToken();
+    }
+  });
 
   // --- Dynamic Viewport & Orientation Resize Adaptation ---
   function updateViewportDimensions() {
@@ -3501,7 +3604,15 @@
     setTimeout(handleResize, 100);
   });
 
-  // --- Visibility Change (Phone Screen Wake) ---
+  // --- Network State & Visibility Change (Phone Screen Wake / Wi-Fi Reconnect) ---
+  window.addEventListener('online', () => {
+    logDebug('NET_ONLINE', 'Network connection restored');
+    if (currentSessionId && (!ws || ws.readyState !== WebSocket.OPEN)) {
+      reconnectAttempts = 0;
+      connect(currentSessionId);
+    }
+  });
+
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       if (currentSessionId && (!ws || ws.readyState !== WebSocket.OPEN)) {

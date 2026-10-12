@@ -467,7 +467,7 @@ async function runTestSuite() {
 
   const wsStop = await connectWs(targetSession.id);
   // Start sleep command
-  const sleepCmd = 'Write-Host "START_SLEEP_JOB"; Start-Sleep -Seconds 10; Write-Host "JOB_FINISHED"\r';
+  const sleepCmd = 'Write-Host "START_SLEEP_JOB"; Start-Sleep -Seconds 10; Write-Host ("JOB_" + "FINISHED")\r';
   const sleepStart = await sendAndAwaitOutput(wsStop, sleepCmd, 'START_SLEEP_JOB', 6000);
   assert(sleepStart.matched, 'Long running job initiated in PTY');
 

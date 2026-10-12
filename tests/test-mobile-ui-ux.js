@@ -111,7 +111,7 @@ async function runAllTests() {
   assert(wsA.readyState === WebSocket.OPEN, 'Connected WebSocket to session for TEST A');
 
   // 3. Run long running command
-  const longCmd = 'Write-Host "START_LONG_PROCESS"; Start-Sleep -Seconds 15; Write-Host "UNEXPECTED_AFTER_SLEEP"\r';
+  const longCmd = 'Write-Host "START_LONG_PROCESS"; Start-Sleep -Seconds 15; Write-Host ("SLEEP" + "_FINISHED_UNEXPECTEDLY")\r';
   const startPromise = sendAndAwaitOutput(wsA, longCmd, 'START_LONG_PROCESS', 6000);
   const startResult = await startPromise;
   assert(startResult.matched, 'Long running command started and outputted initial marker');
@@ -137,7 +137,7 @@ async function runAllTests() {
   });
   await postStopPromise;
 
-  assert(!postStopOutput.includes('UNEXPECTED_AFTER_SLEEP'), 'Command stopped immediately after STOP was tapped (did not finish 15s sleep)');
+  assert(!postStopOutput.includes('SLEEP_FINISHED_UNEXPECTEDLY'), 'Command stopped immediately after STOP was tapped (did not finish 15s sleep)');
   assert(wsA.readyState === WebSocket.OPEN, 'Terminal WebSocket remains open and alive after STOP');
 
   // 6. Enter another command and confirm it works immediately
