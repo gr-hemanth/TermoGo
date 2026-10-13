@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const root = path.resolve(__dirname, '..');
-export const STATE_FILE = path.join(root, '.termbridge.state.json');
+export const STATE_FILE = path.join(root, '.termogo.state.json');
+export const LEGACY_STATE_FILE = path.join(root, '.termbridge.state.json');
 
 export function getStateFilePath() {
   return STATE_FILE;
@@ -17,6 +18,10 @@ export function readStateFile() {
       const content = fs.readFileSync(STATE_FILE, 'utf8');
       return JSON.parse(content);
     }
+    if (fs.existsSync(LEGACY_STATE_FILE)) {
+      const content = fs.readFileSync(LEGACY_STATE_FILE, 'utf8');
+      return JSON.parse(content);
+    }
   } catch {}
   return null;
 }
@@ -26,19 +31,26 @@ export function writeStateFile(data) {
     fs.writeFileSync(STATE_FILE, JSON.stringify(data, null, 2), 'utf8');
     return true;
   } catch (err) {
-    console.warn('[TermBridge Warning] Could not write state file:', err.message);
+    console.warn('[TermoGo Warning] Could not write state file:', err.message);
     return false;
   }
 }
 
 export function removeStateFile() {
+  let removed = false;
   try {
     if (fs.existsSync(STATE_FILE)) {
       fs.unlinkSync(STATE_FILE);
-      return true;
+      removed = true;
     }
   } catch {}
-  return false;
+  try {
+    if (fs.existsSync(LEGACY_STATE_FILE)) {
+      fs.unlinkSync(LEGACY_STATE_FILE);
+      removed = true;
+    }
+  } catch {}
+  return removed;
 }
 
 export function isPidRunning(pid) {
@@ -160,7 +172,7 @@ export function getProcessCommandLine(pid) {
   }
 }
 
-export function isTermBridgeProcess(pid, expectedRoot = root) {
+export function isTermoGoProcess(pid, expectedRoot = root) {
   const numPid = Number(pid);
   if (!isPidRunning(numPid)) return false;
 
@@ -171,8 +183,11 @@ export function isTermBridgeProcess(pid, expectedRoot = root) {
   if (
     cmdLine.includes('server/index.js') ||
     cmdLine.includes('server\\index.js') ||
+    cmdLine.includes('server/launcher.js') ||
+    cmdLine.includes('server\\launcher.js') ||
     cmdLine.includes('server/stop.js') ||
     cmdLine.includes('server\\stop.js') ||
+    cmdLine.includes('termogo') ||
     cmdLine.includes('termbridge') ||
     cmdLine.includes('test-lifecycle')
   ) {
@@ -186,3 +201,5 @@ export function isTermBridgeProcess(pid, expectedRoot = root) {
   }
   return false;
 }
+
+export const isTermBridgeProcess = isTermoGoProcess;

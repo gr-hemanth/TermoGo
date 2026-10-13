@@ -4,7 +4,7 @@ import { startServer } from '../server/index.js';
 
 console.log('=== Starting Real End-to-End Internet Tunnel Verification ===\n');
 
-// 1. Launch TermBridge with live Cloudflare Tunnel
+// 1. Launch TermoGo with live Cloudflare Tunnel
 const testPort = 8788;
 const appInstance = await startServer({
   port: testPort,

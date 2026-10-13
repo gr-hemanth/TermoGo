@@ -15,12 +15,14 @@ import {
   isPortInUse,
   waitForPortFree,
   stopProcessTree,
+  isTermoGoProcess,
   isTermBridgeProcess
 } from '../server/lifecycle.js';
-import { stopTermBridge } from '../server/stop.js';
+import { stopTermoGo, stopTermBridge } from '../server/stop.js';
 
 const TEST_PORT = 8796;
 const TEST_TOKEN = 'test-lifecycle-token-1234567890';
+process.env.PORT = String(TEST_PORT);
 
 let passed = 0;
 let total = 0;
@@ -37,7 +39,7 @@ function assert(condition, message) {
 
 async function runLifecycleTests() {
   console.log('============================================================');
-  console.log('       TermBridge Process Lifecycle & Port Cleanup Tests    ');
+  console.log('       TermoGo Process Lifecycle & Port Cleanup Tests       ');
   console.log('============================================================\n');
 
   // Ensure clean test baseline
@@ -57,13 +59,14 @@ async function runLifecycleTests() {
   removeStateFile();
   assert(!fs.existsSync(STATE_FILE), 'removeStateFile successfully deletes state file');
 
-  // 2. Test isPidRunning & isTermBridgeProcess
+  // 2. Test isPidRunning & isTermoGoProcess
   console.log('\n--- 2. Process Identification & Safe PID Guards ---');
   assert(isPidRunning(process.pid), 'isPidRunning correctly identifies current running process');
   assert(!isPidRunning(99999999), 'isPidRunning returns false for non-existent PID');
-  assert(isTermBridgeProcess(process.pid, root), 'isTermBridgeProcess recognizes current test process in termogo workspace');
+  assert(isTermoGoProcess(process.pid, root), 'isTermoGoProcess recognizes current test process in termogo workspace');
+  assert(isTermBridgeProcess(process.pid, root), 'isTermBridgeProcess backward compatibility alias works');
 
-  // 3. Test starting TermBridge and state registration
+  // 3. Test starting TermoGo and state registration
   console.log('\n--- 3. Clean Startup & State Registration ---');
   process.env.PORT = String(TEST_PORT);
   process.env.AUTH_TOKEN = TEST_TOKEN;
@@ -157,19 +160,19 @@ async function runLifecycleTests() {
 
   // 7. Test npm run stop when server is already stopped (idempotency)
   console.log('\n--- 7. Idempotent Stop When Already Stopped ---');
-  const alreadyStoppedResult = await stopTermBridge();
-  assert(alreadyStoppedResult.success === true, 'stopTermBridge succeeds and exits code 0 when server is already stopped');
-  assert(alreadyStoppedResult.stopped === false, 'stopTermBridge correctly reports server was not running');
+  const alreadyStoppedResult = await stopTermoGo({ port: TEST_PORT });
+  assert(alreadyStoppedResult.success === true, 'stopTermoGo succeeds and exits code 0 when server is already stopped');
+  assert(alreadyStoppedResult.stopped === false, 'stopTermoGo correctly reports server was not running');
 
   // 8. Test stale state file cleanup
   console.log('\n--- 8. Stale State File Cleanup ---');
   writeStateFile({ pid: 99999998, port: TEST_PORT, startedAt: new Date().toISOString() });
   assert(fs.existsSync(STATE_FILE), 'Created dummy stale state file');
-  const staleCleanResult = await stopTermBridge();
-  assert(staleCleanResult.success === true, 'stopTermBridge safely cleans up stale state file');
+  const staleCleanResult = await stopTermoGo({ port: TEST_PORT });
+  assert(staleCleanResult.success === true, 'stopTermoGo safely cleans up stale state file');
   assert(!fs.existsSync(STATE_FILE), 'Stale state file was deleted');
 
-  // 9. Test stop command with a spawned child TermBridge instance
+  // 9. Test stop command with a spawned child TermoGo instance
   console.log('\n--- 9. Full Process Spawn and npm run stop Cycle ---');
   // Spawn child node server/index.js on TEST_PORT
   const childEnv = { ...process.env, PORT: String(TEST_PORT), AUTH_TOKEN: TEST_TOKEN, TUNNEL: 'false' };
@@ -191,13 +194,13 @@ async function runLifecycleTests() {
     resolve(false);
   });
 
-  assert(childStarted, 'Child TermBridge process started and bound port');
+  assert(childStarted, 'Child TermoGo process started and bound port');
   const childState = readStateFile();
   assert(childState && childState.pid === child.pid, 'Child state file recorded child PID');
 
-  // Now execute stopTermBridge to stop the spawned child instance
-  const stopChildResult = await stopTermBridge();
-  assert(stopChildResult.success === true, 'stopTermBridge successfully stopped the child instance');
+  // Now execute stopTermoGo to stop the spawned child instance
+  const stopChildResult = await stopTermoGo({ port: TEST_PORT });
+  assert(stopChildResult.success === true, 'stopTermoGo successfully stopped the child instance');
   const childFreed = await waitForPortFree(TEST_PORT, 4000);
   assert(childFreed, 'Port was verified completely free after stopping child instance');
   assert(!isPidRunning(child.pid), 'Child process is verified terminated');

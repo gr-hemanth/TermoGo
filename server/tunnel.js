@@ -108,7 +108,7 @@ export function startTunnel({ port = 8787, host = '127.0.0.1' } = {}) {
     }
   };
 
-  // Exit hook as safety net; signal handling is coordinated centrally by TermBridge lifecycle
+  // Exit hook as safety net; signal handling is coordinated centrally by TermoGo lifecycle
   process.once('exit', cleanup);
 
   // Set a 30s timeout for tunnel URL acquisition

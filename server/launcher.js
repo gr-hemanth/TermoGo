@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   root,
   getPortOwner,
-  isTermBridgeProcess,
+  isTermoGoProcess,
   readStateFile
 } from './lifecycle.js';
 import {
@@ -19,7 +19,7 @@ import {
   normalizeToken
 } from './index.js';
 import { isCloudflaredAvailable } from './tunnel.js';
-import { stopTermBridge } from './stop.js';
+import { stopTermoGo } from './stop.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -97,21 +97,21 @@ export async function runLauncher(args = process.argv.slice(2)) {
   const argStop = args.includes('--stop') || args.includes('-3');
 
   if (argStop) {
-    const res = await stopTermBridge();
+    const res = await stopTermoGo();
     return res.success ? 0 : 1;
   }
 
   // 2. Check port status before launching
   const owner = getPortOwner(port);
   if (owner) {
-    const isOur = isTermBridgeProcess(owner.pid);
+    const isOur = isTermoGoProcess(owner.pid);
     if (isOur) {
-      console.log(`\n[TermBridge] A TermBridge instance is already running on port ${port} (PID: ${owner.pid}).`);
+      console.log(`\n[TermoGo] A TermoGo instance is already running on port ${port} (PID: ${owner.pid}).`);
       const localIp = getLocalIp();
       console.log(`Local URL: http://localhost:${port}`);
       console.log(`LAN URL:   http://${localIp}:${port}\n`);
 
-      console.log('[TermBridge] Opening browser: http://localhost:' + port);
+      console.log('[TermoGo] Opening browser: http://localhost:' + port);
       openBrowser(`http://localhost:${port}`);
 
       if (process.stdin.isTTY && !argLocal && !argRemote) {
@@ -120,7 +120,7 @@ export async function runLauncher(args = process.argv.slice(2)) {
         console.log('  [2] Stop running instance');
         const choice = await askQuestion('\nSelect option (1/2) [default: 1]: ');
         if (choice === '2') {
-          await stopTermBridge();
+          await stopTermoGo();
         }
       }
       return 0;
@@ -131,7 +131,7 @@ export async function runLauncher(args = process.argv.slice(2)) {
       console.error(`Port ${port} is currently used by an unrelated program:`);
       console.error(`  Process Name: ${owner.name}`);
       console.error(`  Process PID:  ${owner.pid}`);
-      console.error(`\nTermBridge will NOT terminate unrelated processes.`);
+      console.error(`\nTermoGo will NOT terminate unrelated processes.`);
       console.error(`Please close that program or edit PORT in .env before starting.`);
       console.error(`============================================================\n`);
       return 1;
@@ -154,7 +154,7 @@ export async function runLauncher(args = process.argv.slice(2)) {
     enableTunnel = true;
   } else if (process.stdin.isTTY) {
     console.log('\n============================================================');
-    console.log('               TERMBRIDGE STARTUP LAUNCHER                  ');
+    console.log('               TERMOGO STARTUP LAUNCHER                  ');
     console.log('============================================================');
     console.log(`Detected Wi-Fi / LAN IP:  ${localIp}`);
     console.log(`Cloudflare Tunnel:        ${cloudflaredAvailable ? 'Installed & Ready' : 'Not installed'}`);
@@ -162,7 +162,7 @@ export async function runLauncher(args = process.argv.slice(2)) {
     console.log('Select connection mode:');
     console.log('  [1] Local Wi-Fi   (Phone on same Wi-Fi / LAN - Fast & Direct)');
     console.log('  [2] Remote Access (Cloudflare Tunnel - Anywhere / Mobile Data)');
-    console.log('  [3] Stop TermBridge');
+    console.log('  [3] Stop TermoGo');
     console.log('  [4] Exit');
     console.log('------------------------------------------------------------');
 
@@ -183,7 +183,7 @@ export async function runLauncher(args = process.argv.slice(2)) {
         enableTunnel = true;
       }
     } else if (choice === '3') {
-      await stopTermBridge();
+      await stopTermoGo();
       return 0;
     } else if (choice === '4') {
       console.log('Exiting launcher.');
@@ -197,7 +197,7 @@ export async function runLauncher(args = process.argv.slice(2)) {
   }
 
   // 4. Start Server
-  console.log(`\nStarting TermBridge (${enableTunnel ? 'Remote Tunnel' : 'Local Wi-Fi'})...\n`);
+  console.log(`\nStarting TermoGo (${enableTunnel ? 'Remote Tunnel' : 'Local Wi-Fi'})...\n`);
 
   try {
     const instance = await startServer({
@@ -210,7 +210,7 @@ export async function runLauncher(args = process.argv.slice(2)) {
     const testUrl = `http://127.0.0.1:${port}/index.html`;
     waitForHttp(testUrl, 10000).then((ready) => {
       if (ready) {
-        console.log(`[TermBridge] Server ready. Opening browser at http://localhost:${port}...`);
+        console.log(`[TermoGo] Server ready. Opening browser at http://localhost:${port}...`);
         openBrowser(`http://localhost:${port}`);
       }
     });
@@ -226,7 +226,7 @@ export async function runLauncher(args = process.argv.slice(2)) {
     // Keep process alive for user terminal interaction
     return new Promise(() => {});
   } catch (err) {
-    console.error('\n[TermBridge Startup Failed]', err.message);
+    console.error('\n[TermoGo Startup Failed]', err.message);
     return 1;
   }
 }
@@ -245,7 +245,7 @@ if (isMain) {
       process.exit(code);
     }
   }).catch((err) => {
-    console.error('[TermBridge Launcher Error]', err);
+    console.error('[TermoGo Launcher Error]', err);
     process.exit(1);
   });
 }

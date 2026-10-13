@@ -87,10 +87,8 @@ The Windows launcher can also check dependencies and install them when necessary
 Double-click:
 
 ```text
-Start-TermBridge.bat
+Start-TermoGo.bat
 ```
-
-Despite the launcher's filename, the application is named **TermoGo**.
 
 Choose one of the modes from the startup menu:
 
@@ -153,7 +151,7 @@ The behavior of terminal applications varies. Some full-screen terminal programs
 Double-click:
 
 ```text
-Stop-TermBridge.bat
+Stop-TermoGo.bat
 ```
 
 Alternatively, run the project's stop script from PowerShell:
@@ -258,6 +256,6 @@ The project is intended to make controlling a laptop's terminal from a phone sim
 
 **G R HEMANTH** - Creator and Maintainer of TermoGo.
 
-GitHub: [@gr-hemanth](https://github.com/your-username)
+GitHub: [@gr-hemanth](https://github.com/gr-hemanth)
 
 TermoGo is developed and maintained as a project to make remote terminal interaction more accessible through a mobile-friendly interface.

@@ -7,6 +7,7 @@ node_modules/
 !.env.example
 
 # Runtime state files and temporary data
+.termogo.*
 .termbridge.*
 
 # Logs

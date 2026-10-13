@@ -6,7 +6,7 @@ process.env.PORT = '8799';
 process.env.AUTH_TOKEN = TOKEN;
 process.env.TUNNEL = 'false'; // Keep test local for deterministic speed
 
-console.log('--- Starting TermBridge Verification Test Suite ---');
+console.log('--- Starting TermoGo Verification Test Suite ---');
 
 // Import and explicitly start server on port 8799
 const { startServer } = await import('../server/index.js');

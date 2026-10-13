@@ -16,7 +16,7 @@ process.env.AUTH_TOKEN = TOKEN;
 process.env.TUNNEL = 'false';
 
 console.log('============================================================');
-console.log('  TermBridge: Essentials, Keyboard & Mouse Test Suite       ');
+console.log('  TermoGo: Essentials, Keyboard & Mouse Test Suite          ');
 console.log('============================================================\n');
 
 const { startServer } = await import('../server/index.js');

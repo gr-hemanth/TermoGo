@@ -1,10 +1,10 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title TermBridge Launcher
+title TermoGo Launcher
 
 echo ============================================================
-echo                     TERMBRIDGE
+echo                      TERMOGO
 echo       Control AGY and Terminals from your Phone
 echo ============================================================
 echo.
@@ -31,7 +31,7 @@ if %ERRORLEVEL% neq 0 (
 
 :: 3. Verify project dependencies are installed
 if not exist "node_modules\" (
-    echo [TermBridge] First-time setup: installing dependencies...
+    echo [TermoGo] First-time setup: installing dependencies...
     call npm install
     if %ERRORLEVEL% neq 0 (
         echo.
@@ -40,14 +40,14 @@ if not exist "node_modules\" (
         pause
         exit /b 1
     )
-    echo [TermBridge] Dependencies installed successfully.
+    echo [TermoGo] Dependencies installed successfully.
     echo.
 )
 
-:: 4. Start TermBridge Launcher
+:: 4. Start TermoGo Launcher
 node server/launcher.js %*
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo [TermBridge] Process exited with code %ERRORLEVEL%.
+    echo [TermoGo] Process exited with code %ERRORLEVEL%.
     pause
 )

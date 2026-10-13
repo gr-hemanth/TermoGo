@@ -16,7 +16,7 @@ process.env.AUTH_TOKEN = TOKEN;
 process.env.TUNNEL = 'false';
 
 console.log('============================================================');
-console.log('  TermBridge: Phase 2 Security & Reliability Test Suite     ');
+console.log('  TermoGo: Phase 2 Security & Reliability Test Suite        ');
 console.log('============================================================\n');
 
 // Capture console.log to verify secrets are not leaked in application logs

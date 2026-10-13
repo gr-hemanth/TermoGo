@@ -1,10 +1,10 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title TermBridge - Stop
+title TermoGo - Stop
 
 echo ============================================================
-echo                 STOPPING TERMBRIDGE
+echo                  STOPPING TERMOGO
 echo ============================================================
 echo.
 

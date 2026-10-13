@@ -8,7 +8,7 @@ import {
   isPortInUse,
   waitForPortFree
 } from '../server/lifecycle.js';
-import { stopTermBridge } from '../server/stop.js';
+import { stopTermoGo, stopTermBridge } from '../server/stop.js';
 import {
   ensureStableToken,
   shouldDisplayToken,
@@ -16,6 +16,7 @@ import {
 } from '../server/index.js';
 
 const TEST_PORT = 8794;
+process.env.PORT = String(TEST_PORT);
 let passed = 0;
 let total = 0;
 
@@ -31,11 +32,11 @@ function assert(condition, message) {
 
 async function runTests() {
   console.log('============================================================');
-  console.log('       TermBridge Token Display & Persistence Tests         ');
+  console.log('       TermoGo Token Display & Persistence Tests            ');
   console.log('============================================================\n');
 
   // Ensure test port is free initially
-  await stopTermBridge();
+  await stopTermoGo({ port: TEST_PORT });
   await waitForPortFree(TEST_PORT, 2000);
 
   // 1. Test ensureStableToken persistence & comment preservation on custom temp env
@@ -130,7 +131,7 @@ async function runTests() {
   const serverReady = await new Promise((resolve) => {
     const t0 = Date.now();
     const iv = setInterval(() => {
-      if (capturedOutput.includes('TERMBRIDGE SERVER STARTED') && capturedOutput.includes('ACCESS TOKEN:')) {
+      if ((capturedOutput.includes('TERMOGO SERVER STARTED') || capturedOutput.includes('TERMBRIDGE SERVER STARTED')) && capturedOutput.includes('ACCESS TOKEN:')) {
         clearInterval(iv);
         resolve(true);
       } else if (Date.now() - t0 > 10000) {
@@ -199,7 +200,7 @@ async function runTests() {
   // 6. Test token stability across process restarts
   console.log('\n--- 6. Token Stability Across Server Restarts ---');
   // Stop running child
-  await stopTermBridge();
+  await stopTermoGo({ port: TEST_PORT });
   await waitForPortFree(TEST_PORT, 4000);
   assert(!isPortInUse(TEST_PORT), 'First server instance stopped and port released');
 
@@ -216,7 +217,7 @@ async function runTests() {
   const secondReady = await new Promise((resolve) => {
     const t0 = Date.now();
     const iv = setInterval(() => {
-      if (secondCapturedOutput.includes('TERMBRIDGE SERVER STARTED') && secondCapturedOutput.includes('ACCESS TOKEN:')) {
+      if ((secondCapturedOutput.includes('TERMOGO SERVER STARTED') || secondCapturedOutput.includes('TERMBRIDGE SERVER STARTED')) && secondCapturedOutput.includes('ACCESS TOKEN:')) {
         clearInterval(iv);
         resolve(true);
       } else if (Date.now() - t0 > 10000) {
@@ -238,7 +239,7 @@ async function runTests() {
   // 7. Test non-interactive redaction guard
   console.log('\n--- 7. Non-Interactive Output Redaction Guard ---');
   // Stop second child
-  await stopTermBridge();
+  await stopTermoGo({ port: TEST_PORT });
   await waitForPortFree(TEST_PORT, 4000);
 
   // Spawn with DISPLAY_TOKEN=false to simulate redirected output / daemon
@@ -254,7 +255,7 @@ async function runTests() {
   await new Promise((resolve) => {
     const t0 = Date.now();
     const iv = setInterval(() => {
-      if (redirectedOutput.includes('TERMBRIDGE SERVER STARTED')) {
+      if (redirectedOutput.includes('TERMOGO SERVER STARTED') || redirectedOutput.includes('TERMBRIDGE SERVER STARTED')) {
         clearInterval(iv);
         resolve(true);
       } else if (Date.now() - t0 > 8000) {
@@ -268,7 +269,7 @@ async function runTests() {
   assert(redirectedOutput.includes('[Protected - Non-interactive/redirected stdout]'), 'Redacted security notice printed in redirected output');
 
   // Final stop
-  await stopTermBridge();
+  await stopTermoGo({ port: TEST_PORT });
   await waitForPortFree(TEST_PORT, 4000);
   assert(!isPortInUse(TEST_PORT), 'Test port cleanly released');
 
@@ -282,6 +283,6 @@ async function runTests() {
 
 runTests().catch(async (err) => {
   console.error('[FATAL ERROR]', err);
-  await stopTermBridge();
+  await stopTermoGo({ port: TEST_PORT });
   process.exit(1);
 });

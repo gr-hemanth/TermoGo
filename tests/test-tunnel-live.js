@@ -6,7 +6,7 @@ console.log('Testing live Cloudflare Tunnel connectivity with edge propagation..
 
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('TERMBRIDGE_INTERNET_TUNNEL_SUCCESS');
+  res.end('TERMOGO_INTERNET_TUNNEL_SUCCESS');
 });
 
 server.listen(8798, '127.0.0.1', async () => {
@@ -33,7 +33,7 @@ server.listen(8798, '127.0.0.1', async () => {
       });
 
       console.log(`Status ${res.status}`);
-      if (res.status === 200 && res.body === 'TERMBRIDGE_INTERNET_TUNNEL_SUCCESS') {
+      if (res.status === 200 && (res.body === 'TERMOGO_INTERNET_TUNNEL_SUCCESS' || res.body === 'TERMBRIDGE_INTERNET_TUNNEL_SUCCESS')) {
         console.log('\n[PASS] Internet tunnel verified: External HTTPS communication works!');
         success = true;
         break;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
-  <title>TermBridge</title>
+  <title>TermoGo</title>
   <!-- Self-hosted local assets (Zero external CDN dependency) -->
   <link rel="stylesheet" href="/vendor/xterm.css">
   <script src="/vendor/xterm.js"></script>
@@ -1078,7 +1078,7 @@
 <header>
   <div class="header-left">
     <div class="brand">
-      <span class="brand-icon">⚡</span><span class="brand-text"> TermBridge</span>
+      <span class="brand-icon">⚡</span><span class="brand-text"> TermoGo</span>
     </div>
     <div class="status-badge">
       <span id="status-dot" class="status-dot"></span>
@@ -1463,7 +1463,7 @@
       const match = location.hash.match(/token=([^&]+)/);
       if (match) {
         const t = cleanToken(decodeURIComponent(match[1]));
-        try { localStorage.setItem('termbridge-token', t); } catch {}
+        try { localStorage.setItem('termogo-token', t); } catch {}
         history.replaceState(null, '', location.pathname);
         logDebug('TOKEN_PRESENT=true', `TOKEN_LENGTH=${t.length} (from hash)`);
         return t;
@@ -1473,14 +1473,14 @@
     const params = new URLSearchParams(location.search);
     if (params.get('token')) {
       const t = cleanToken(params.get('token'));
-      try { localStorage.setItem('termbridge-token', t); } catch {}
+      try { localStorage.setItem('termogo-token', t); } catch {}
       history.replaceState(null, '', location.pathname);
       logDebug('TOKEN_PRESENT=true', `TOKEN_LENGTH=${t.length} (from query)`);
       return t;
     }
     // 3. From localStorage
     let stored = '';
-    try { stored = localStorage.getItem('termbridge-token') || ''; } catch {}
+    try { stored = localStorage.getItem('termogo-token') || localStorage.getItem('termbridge-token') || ''; } catch {}
     const cleaned = cleanToken(stored);
     logDebug(`TOKEN_PRESENT=${!!cleaned}`, `TOKEN_LENGTH=${cleaned.length} (from storage)`);
     return cleaned;
@@ -3545,7 +3545,7 @@
 
       const sessionsData = await res.json();
       token = cleaned;
-      try { localStorage.setItem('termbridge-token', token); } catch {}
+      try { localStorage.setItem('termogo-token', token); } catch {}
       authModal.style.display = 'none';
       btnSubmitToken.disabled = false;
       btnSubmitToken.textContent = 'Authenticate';

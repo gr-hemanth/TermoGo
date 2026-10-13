@@ -12,7 +12,7 @@ import { startTunnel } from './tunnel.js';
 import {
   getPortOwner,
   isPortInUse,
-  isTermBridgeProcess,
+  isTermoGoProcess,
   writeStateFile,
   removeStateFile,
   waitForPortFree,
@@ -30,7 +30,7 @@ if (fs.existsSync(envPath) && typeof process.loadEnvFile === 'function') {
   try {
     process.loadEnvFile(envPath);
   } catch (err) {
-    console.warn('[TermBridge] Warning: Failed to load .env file:', err.message);
+    console.warn('[TermoGo] Warning: Failed to load .env file:', err.message);
   }
 }
 
@@ -48,7 +48,8 @@ export const KNOWN_DEFAULT_TOKENS = new Set([
   'password',
   '123456',
   'secret',
-  'termbridge'
+  'termbridge',
+  'termogo'
 ]);
 
 export function shouldDisplayToken() {
@@ -127,9 +128,9 @@ export function ensureStableToken({ envFilePath = envPath } = {}) {
         fs.writeFileSync(envFilePath, defaultEnv, 'utf8');
       }
     }
-    console.log('[TermBridge] Generated secure access token and saved to .env for persistence.');
+    console.log('[TermoGo] Generated secure access token and saved to .env for persistence.');
   } catch (err) {
-    console.warn('[TermBridge Warning] Could not persist AUTH_TOKEN to .env:', err.message);
+    console.warn('[TermoGo Warning] Could not persist AUTH_TOKEN to .env:', err.message);
   }
 
   return { token: generatedToken, generated: true };
@@ -1217,9 +1218,9 @@ let activeTunnel = null;
 export async function shutdown({ signal = 'SIGTERM', exitCode = 0, exitProcess = false } = {}) {
   if (isShuttingDown) return;
   isShuttingDown = true;
-  console.log(`\n[TermBridge] Initiating graceful shutdown (${signal})...`);
+  console.log(`\n[TermoGo] Initiating graceful shutdown (${signal})...`);
 
-  // 1. Stop Cloudflare Tunnel child process if started by this TermBridge instance
+  // 1. Stop Cloudflare Tunnel child process if started by this TermoGo instance
   if (activeTunnel) {
     try {
       activeTunnel.stop();
@@ -1269,7 +1270,7 @@ export async function shutdown({ signal = 'SIGTERM', exitCode = 0, exitProcess =
   // 5. Remove instance state file
   removeStateFile();
 
-  console.log('[TermBridge] Graceful shutdown complete. All ports and listeners released.');
+  console.log('[TermoGo] Graceful shutdown complete. All ports and listeners released.');
 
   if (exitProcess) {
     process.exit(exitCode);
@@ -1300,13 +1301,13 @@ export function startServer({ port = PORT, host = HOST, enableTunnel = process.e
   // Port conflict check BEFORE attempting to listen
   const owner = getPortOwner(port);
   if (owner) {
-    const isOurProcess = isTermBridgeProcess(owner.pid);
-    const diagMsg = `[TermBridge Startup Error] Port ${port} is already in use by process "${owner.name}" (PID: ${owner.pid}).\n` +
+    const isOurProcess = isTermoGoProcess(owner.pid);
+    const diagMsg = `[TermoGo Startup Error] Port ${port} is already in use by process "${owner.name}" (PID: ${owner.pid}).\n` +
       (isOurProcess
-        ? `-> Another TermBridge instance appears to be running. Run "npm run stop" to stop it.\n`
-        : `-> An unrelated process is using port ${port}. TermBridge will not terminate unrelated processes.\n`
+        ? `-> Another TermoGo instance appears to be running. Run "npm run stop" to stop it.\n`
+        : `-> An unrelated process is using port ${port}. TermoGo will not terminate unrelated processes.\n`
       ) +
-      `TermBridge startup aborted safely without modifying existing processes.`;
+      `TermoGo startup aborted safely without modifying existing processes.`;
     console.error(`\n${diagMsg}\n`);
     const portError = new Error(`Port ${port} is already in use by PID ${owner.pid} (${owner.name})`);
     portError.code = 'EADDRINUSE';
@@ -1356,7 +1357,7 @@ export function startServer({ port = PORT, host = HOST, enableTunnel = process.e
           publicUrl = await tunnel.url;
         } catch (err) {
           console.warn(`[Tunnel Warning] Cloudflare Tunnel failed: ${err.message}`);
-          console.log('TermBridge is still running locally and over LAN.');
+          console.log('TermoGo is still running locally and over LAN.');
         }
       }
 
@@ -1384,7 +1385,7 @@ export function startServer({ port = PORT, host = HOST, enableTunnel = process.e
 
 export function printStartupBanner({ port, localIp, publicUrl, token = TOKEN } = {}) {
   console.log('\n============================================================');
-  console.log('             TERMBRIDGE SERVER STARTED                      ');
+  console.log('             TERMOGO SERVER STARTED                         ');
   console.log('============================================================');
   console.log(`Local URL:    http://localhost:${port}`);
   console.log(`LAN URL:      http://${localIp}:${port}`);
@@ -1403,7 +1404,7 @@ export function printStartupBanner({ port, localIp, publicUrl, token = TOKEN } =
   console.log('============================================================\n');
 
   const qrTarget = publicUrl || `http://${localIp}:${port}`;
-  console.log('Scan this QR code with your phone camera to open TermBridge:');
+  console.log('Scan this QR code with your phone camera to open TermoGo:');
   qrcode.generate(qrTarget, { small: true }, qr => console.log(qr));
   console.log('Then enter the ACCESS TOKEN displayed above.\n');
 }

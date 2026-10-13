@@ -11,7 +11,7 @@ import {
   startServer
 } from '../server/index.js';
 import { isCloudflaredAvailable, findCloudflaredBinary } from '../server/tunnel.js';
-import { getPortOwner, isTermBridgeProcess } from '../server/lifecycle.js';
+import { getPortOwner, isTermoGoProcess, isTermBridgeProcess } from '../server/lifecycle.js';
 import { waitForHttp } from '../server/launcher.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -46,7 +46,7 @@ async function checkAsync(desc, fn) {
 
 async function runLauncherFlowTests() {
   console.log('\n============================================================');
-  console.log('             TERMBRIDGE LAUNCHER FLOW TESTS                 ');
+  console.log('             TERMOGO LAUNCHER FLOW TESTS                    ');
   console.log('============================================================\n');
 
   console.log('--- 1. Wi-Fi / Local IP Detection ---');
