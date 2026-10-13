@@ -49,12 +49,14 @@ const orderCopyLast = toolbarHtml.indexOf('id="key-copy-last"');
 const orderUp = toolbarHtml.indexOf('id="key-up"');
 const orderDown = toolbarHtml.indexOf('id="key-down"');
 const orderEssentials = toolbarHtml.indexOf('id="btn-essentials"');
+const orderEnter = toolbarHtml.indexOf('id="key-enter"');
 
 assert(orderStop < orderCopyLast, 'Toolbar: STOP is placed 1st');
 assert(orderCopyLast < orderUp, 'Toolbar: COPY is placed 2nd');
 assert(orderUp < orderDown, 'Toolbar: UP is placed 3rd');
 assert(orderDown < orderEssentials, 'Toolbar: DOWN is placed 4th');
-assert(orderEssentials !== -1, 'Toolbar: Essentials button is placed 5th');
+assert(orderEssentials < orderEnter, 'Toolbar: ENTER is placed 6th beside Essentials');
+assert(html.includes('.tool-btn-enter') && html.includes('flex: 1'), 'Toolbar: ENTER has responsive flex: 1 styling');
 
 assert(html.includes('min-height: 40px'), 'Toolbar buttons have comfortable >= 40px touch targets');
 assert(html.includes('gap: 8px'), 'Toolbar buttons have 8px spacing preventing accidental tap overlaps');

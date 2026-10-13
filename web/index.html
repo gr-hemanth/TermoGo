@@ -480,6 +480,26 @@
       border-color: var(--accent);
       color: var(--accent);
     }
+    .tool-btn-enter, .tool-key-enter {
+      width: auto;
+      min-width: 68px;
+      flex: 1;
+      padding: 0 10px;
+      gap: 6px;
+      color: #e6edf3;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .tool-btn-enter:active, .tool-key-enter:active {
+      background: #30363d;
+      border-color: #58a6ff;
+      color: #ffffff;
+      transform: scale(0.96);
+    }
+    .tool-btn-enter svg {
+      flex-shrink: 0;
+    }
     .tool-key-scroll {
       font-size: 13px;
       font-weight: 700;
@@ -508,7 +528,7 @@
       color: #ffffff;
       transform: scale(0.96);
     }
-    .tool-key-scroll.soften {
+    .tool-key-scroll.soften, .tool-key-arrow.soften, .tool-btn-arrow.soften {
       opacity: 0.45;
     }
 
@@ -1295,14 +1315,18 @@
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
       </svg>
     </button>
-    <button class="tool-btn tool-btn-arrow tool-key-arrow" id="key-up" type="button" tabindex="-1" title="Up Arrow" aria-label="Up">
+    <button class="tool-btn tool-btn-arrow tool-key-arrow" id="key-up" type="button" tabindex="-1" title="Jump to Top" aria-label="Jump to Top">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 19V5M5 12l7-7 7 7"/>
+        <path d="M5 3h14"/>
+        <path d="M18 13l-6-6-6 6"/>
+        <path d="M12 7v14"/>
       </svg>
     </button>
-    <button class="tool-btn tool-btn-arrow tool-key-arrow" id="key-down" type="button" tabindex="-1" title="Down Arrow" aria-label="Down">
+    <button class="tool-btn tool-btn-arrow tool-key-arrow" id="key-down" type="button" tabindex="-1" title="Jump to Bottom" aria-label="Jump to Bottom">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 5v14M19 12l-7 7-7-7"/>
+        <path d="M5 21h14"/>
+        <path d="M6 11l6 6 6-6"/>
+        <path d="M12 17V3"/>
       </svg>
     </button>
     <span class="toolbar-divider"></span>
@@ -1313,6 +1337,13 @@
         <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
         <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
       </svg>
+    </button>
+    <button class="tool-btn tool-btn-enter tool-key-enter" id="key-enter" type="button" tabindex="-1" title="ENTER" aria-label="ENTER">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 10 4 15 9 20"></polyline>
+        <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+      </svg>
+      <span>ENTER</span>
     </button>
   </div>
 
@@ -1523,8 +1554,13 @@
   const keyCopy = document.getElementById('key-copy');
   const keyUp = document.getElementById('key-up');
   const keyDown = document.getElementById('key-down');
+  const keyEnter = document.getElementById('key-enter');
   const keyLeft = document.getElementById('key-left');
   const keyRight = document.getElementById('key-right');
+
+  function getActiveTerminal() {
+    return term;
+  }
 
   let ctrlActive = false;
   let currentSessionId = null;
@@ -1956,12 +1992,15 @@
   function updateScrollButtonState() {
     if (!term || !term.buffer || !term.buffer.active) return;
     const b = term.buffer.active;
-    const isAtBottom = b.viewportY >= b.ybase;
+    const baseY = b.baseY !== undefined ? b.baseY : (b.ybase || 0);
+    const isAtBottom = b.viewportY >= baseY;
     const isAtTop = b.viewportY <= 0;
 
     if (btnScrollBottom) btnScrollBottom.classList.toggle('soften', isAtBottom);
     if (btnScrollDown) btnScrollDown.classList.toggle('soften', isAtBottom);
     if (btnScrollUp) btnScrollUp.classList.toggle('soften', isAtTop);
+    if (keyDown) keyDown.classList.toggle('soften', isAtBottom);
+    if (keyUp) keyUp.classList.toggle('soften', isAtTop);
   }
 
   if (btnScrollUp) {
@@ -2024,10 +2063,10 @@
       }
     };
   }
-  // --- UP & DOWN Toolbar Arrow Buttons ---
+  // --- UP & DOWN Toolbar Jump Controls ---
   let lastUpTapTime = 0;
   let lastDownTapTime = 0;
-  const ARROW_DEBOUNCE_MS = 150; // Guard against touch+click double firing or rapid bouncing
+  const ARROW_DEBOUNCE_MS = 100; // Guard against touch+click double firing or rapid bouncing
 
   function handleKeyUp(e) {
     if (e && typeof e.preventDefault === 'function') {
@@ -2037,9 +2076,11 @@
     const now = Date.now();
     if (now - lastUpTapTime < ARROW_DEBOUNCE_MS) return;
     lastUpTapTime = now;
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      sendInput('\x1b[A');
-      logDebug('KEY_UP', 'Sent UP arrow (\\x1b[A)');
+    const activeTerm = getActiveTerminal();
+    if (activeTerm) {
+      activeTerm.scrollToTop();
+      updateScrollButtonState();
+      logDebug('SCROLL_TOP', 'Jumped to top of terminal scrollback');
     }
   }
 
@@ -2051,9 +2092,31 @@
     const now = Date.now();
     if (now - lastDownTapTime < ARROW_DEBOUNCE_MS) return;
     lastDownTapTime = now;
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      sendInput('\x1b[B');
-      logDebug('KEY_DOWN', 'Sent DOWN arrow (\\x1b[B)');
+    const activeTerm = getActiveTerminal();
+    if (activeTerm) {
+      activeTerm.scrollToBottom();
+      updateScrollButtonState();
+      logDebug('SCROLL_BOTTOM', 'Jumped to bottom of terminal output');
+    }
+  }
+
+  // --- ENTER Toolbar Button ---
+  let lastEnterTapTime = 0;
+  const ENTER_DEBOUNCE_MS = 120;
+
+  function handleKeyEnter(e) {
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const now = Date.now();
+    if (now - lastEnterTapTime < ENTER_DEBOUNCE_MS) return;
+    lastEnterTapTime = now;
+    sendInput('\r');
+    logDebug('KEY_ENTER', 'Sent ENTER (\\r) to active terminal');
+    const activeTerm = getActiveTerminal();
+    if (activeTerm) {
+      try { activeTerm.focus(); } catch {}
     }
   }
 
@@ -2064,6 +2127,10 @@
   if (keyDown) {
     keyDown.addEventListener('pointerdown', handleKeyDown);
     keyDown.onclick = handleKeyDown;
+  }
+  if (keyEnter) {
+    keyEnter.addEventListener('pointerdown', handleKeyEnter);
+    keyEnter.onclick = handleKeyEnter;
   }
   if (keyLeft) keyLeft.onclick = () => { sendInput('\x1b[D'); };
   if (keyRight) keyRight.onclick = () => { sendInput('\x1b[C'); };
@@ -3641,6 +3708,15 @@
     } catch (err) {
       logDebug('BOOT_ERR', err.message);
     }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.getActiveTerminal = getActiveTerminal;
+    window.handleKeyUp = handleKeyUp;
+    window.handleKeyDown = handleKeyDown;
+    window.handleKeyEnter = handleKeyEnter;
+    window.updateScrollButtonState = updateScrollButtonState;
+    window.sendInput = sendInput;
   }
 
   bootstrap();

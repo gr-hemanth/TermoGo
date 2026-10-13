@@ -244,6 +244,7 @@ async function runAllTests() {
   assert(html.includes('id="key-tab"') && html.includes('TAB'), 'TAB control retained');
   assert(html.includes('id="key-ctrl"') && html.includes('CTRL'), 'CTRL control retained');
   assert(html.includes('id="key-up"') && html.includes('id="key-down"'), 'Arrow navigation controls retained');
+  assert(html.includes('id="key-enter"') && html.includes('ENTER'), 'ENTER control in mobile toolbar');
   assert(html.includes('id="key-copy"') && html.includes('SEL'), 'SEL (copy selection) retained');
 
   // 4. Verify touch targets and gap spacing

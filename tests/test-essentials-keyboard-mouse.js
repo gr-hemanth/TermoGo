@@ -120,14 +120,16 @@ async function runTestSuite() {
   const posUp = toolbarHtml.indexOf('id="key-up"');
   const posDown = toolbarHtml.indexOf('id="key-down"');
   const posEssentials = toolbarHtml.indexOf('id="btn-essentials"');
+  const posEnter = toolbarHtml.indexOf('id="key-enter"');
 
-  assert(posStop !== -1 && posCopy !== -1 && posUp !== -1 && posDown !== -1 && posEssentials !== -1, 'All 5 approved toolbar controls exist in mobile toolbar');
-  assert(posStop < posCopy && posCopy < posUp && posUp < posDown && posDown < posEssentials, 'Toolbar controls follow approved sequence: STOP -> COPY -> UP -> DOWN -> Essentials');
+  assert(posStop !== -1 && posCopy !== -1 && posUp !== -1 && posDown !== -1 && posEssentials !== -1 && posEnter !== -1, 'All approved toolbar controls exist in mobile toolbar');
+  assert(posStop < posCopy && posCopy < posUp && posUp < posDown && posDown < posEssentials && posEssentials < posEnter, 'Toolbar controls follow approved sequence: STOP -> COPY -> UP -> DOWN -> Essentials -> ENTER');
 
   // Verify icon-only design (no text labels beside icons)
   assert(!toolbarHtml.includes('>STOP<') && !toolbarHtml.includes('>■ STOP<'), 'STOP button is icon-only (no text label beside icon)');
   assert(!toolbarHtml.includes('>COPY LAST<'), 'COPY button is icon-only (no text label beside icon)');
   assert(!toolbarHtml.includes('>Essentials<'), 'Essentials button is icon-only (no text label beside icon)');
+  assert(toolbarHtml.includes('>ENTER<'), 'ENTER button includes clear ENTER label');
 
   // Verify Essentials popover structure
   assert(html.includes('id="essentials-popover"'), 'Essentials floating popover (#essentials-popover) exists in DOM');
@@ -189,13 +191,18 @@ async function runTestSuite() {
   const downResult = await sendAndAwaitOutput(ws, 'echo "DOWN_ARROW_OK"\r', 'DOWN_ARROW_OK', 6000);
   assert(downResult.matched, 'DOWN arrow key sequence processed by PTY cleanly');
 
-  // Verify exact escape sequences and disconnected protection in client handlers
+  // Verify UP and DOWN are viewport jump controls with zero terminal input, and ENTER sends \r
   const jsContent = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-  const hasExactUpCode = /function handleKeyUp[\s\S]*?sendInput\('(\\x1b\[A)'\)/.test(jsContent);
-  const hasExactDownCode = /function handleKeyDown[\s\S]*?sendInput\('(\\x1b\[B)'\)/.test(jsContent);
-  assert(hasExactUpCode, 'UP button handler sends exactly \\x1b[A');
-  assert(hasExactDownCode, 'DOWN button handler sends exactly \\x1b[B');
-  assert(jsContent.includes('ws && ws.readyState === WebSocket.OPEN'), 'Neither UP nor DOWN button sends input when WebSocket is disconnected');
+  const upMatch = jsContent.match(/function handleKeyUp\([^{]*\)\s*\{([\s\S]*?)\n  \}/);
+  const downMatch = jsContent.match(/function handleKeyDown\([^{]*\)\s*\{([\s\S]*?)\n  \}/);
+  const upFnBody = upMatch ? upMatch[1] : '';
+  const downFnBody = downMatch ? downMatch[1] : '';
+  const enterSendsCr = /function handleKeyEnter[\s\S]*?sendInput\('\\r'\)/.test(jsContent);
+
+  assert(upFnBody.includes('scrollToTop()') && !upFnBody.includes('sendInput'), 'UP button handler jumps to top via scrollToTop() with zero PTY input');
+  assert(downFnBody.includes('scrollToBottom()') && !downFnBody.includes('sendInput'), 'DOWN button handler jumps to bottom via scrollToBottom() with zero PTY input');
+  assert(enterSendsCr, 'ENTER button handler sends exactly \\r to terminal');
+  assert(jsContent.includes('ws && ws.readyState === WebSocket.OPEN'), 'Disconnected protection safely guards terminal input');
 
   // Verify terminal keyboard focusing logic in JS
   assert(jsContent.includes('function focusTerminalKeyboard()'), 'focusTerminalKeyboard function defined in client');
