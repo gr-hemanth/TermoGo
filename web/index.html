@@ -1078,7 +1078,7 @@
 <header>
   <div class="header-left">
     <div class="brand">
-      <span class="brand-icon">⚡</span><span class="brand-text"> TermoGo</span>
+      <span class="brand-icon"></span><span class="brand-text"> TermoGo</span>
     </div>
     <div class="status-badge">
       <span id="status-dot" class="status-dot"></span>
@@ -1118,7 +1118,7 @@
     <!-- Keyboard Header: Title, Active Modifiers, Tab Switcher, Close -->
     <div class="vk-header">
       <div class="vk-header-left">
-        <span class="vk-title">⌨ Keyboard</span>
+        <span class="vk-title">Keyboard</span>
         <div class="vk-modifiers-display" id="vk-modifiers-display">
           <span class="vk-mod-badge" id="vk-badge-ctrl" style="display:none;">CTRL</span>
           <span class="vk-mod-badge" id="vk-badge-shift" style="display:none;">SHIFT</span>
@@ -1131,7 +1131,7 @@
         <button class="vk-tab-btn" id="btn-vk-tab-nav" type="button" tabindex="-1">Nav / Fn</button>
         <button class="vk-tab-btn" id="btn-vk-tab-shortcuts" type="button" tabindex="-1">Shortcuts</button>
       </div>
-      <button class="vk-close-btn" id="btn-close-vk" type="button" tabindex="-1" title="Close Keyboard" aria-label="Close Keyboard">✕</button>
+      <button class="vk-close-btn" id="btn-close-vk" type="button" tabindex="-1" title="Close Keyboard" aria-label="Close Keyboard">&times;</button>
     </div>
 
     <!-- Keyboard Body: Tab Views -->
@@ -1289,7 +1289,7 @@
     <button class="tool-btn tool-btn-stop tool-key-stop" id="key-stop" type="button" tabindex="-1" title="■ STOP" aria-label="STOP">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2.5" fill="#f85149"/></svg>
     </button>
-    <button class="tool-btn tool-btn-copy tool-key-copy-last" id="key-copy-last" type="button" tabindex="-1" title="📋 COPY LAST" aria-label="COPY LAST">
+    <button class="tool-btn tool-btn-copy tool-key-copy-last" id="key-copy-last" type="button" tabindex="-1" title="COPY LAST" aria-label="COPY LAST">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -1344,17 +1344,17 @@
   <div class="touchpad-overlay" id="touchpad-overlay">
     <div class="touchpad-header">
       <div class="touchpad-mode-switcher">
-        <button class="touchpad-mode-btn active" id="btn-mode-select" type="button" tabindex="-1">📋 Select</button>
-        <button class="touchpad-mode-btn" id="btn-mode-pointer" type="button" tabindex="-1">🖱 Pointer</button>
+        <button class="touchpad-mode-btn active" id="btn-mode-select" type="button" tabindex="-1">Select</button>
+        <button class="touchpad-mode-btn" id="btn-mode-pointer" type="button" tabindex="-1">Pointer</button>
       </div>
-      <button class="touchpad-close-btn" id="btn-close-touchpad" title="Exit Mouse Mode" aria-label="Close Touchpad">✕</button>
+      <button class="touchpad-close-btn" id="btn-close-touchpad" title="Exit Mouse Mode" aria-label="Close Touchpad">&times;</button>
     </div>
 
     <!-- Mode 1: Select / Copy Mode View -->
     <div class="touchpad-view-select" id="touchpad-view-select">
       <div class="selection-status-text" id="selection-status-text">Move pointer or drag to select text</div>
       <div class="touchpad-actions" style="margin-bottom:2px;">
-        <button class="touchpad-btn mouse-btn-primary" id="btn-sel-copy" type="button" tabindex="-1" title="Copy Selected Text">📋 Copy</button>
+        <button class="touchpad-btn mouse-btn-primary" id="btn-sel-copy" type="button" tabindex="-1" title="Copy Selected Text">Copy</button>
         <button class="touchpad-btn" id="btn-sel-all" type="button" tabindex="-1" title="Select All Buffer">Select All</button>
         <button class="touchpad-btn" id="btn-sel-clear" type="button" tabindex="-1" title="Clear Selection">Clear</button>
       </div>
@@ -1408,7 +1408,7 @@
 <div id="delete-modal" class="modal-overlay">
   <div class="modal-box delete-modal-box">
     <div class="modal-title" style="color:#f85149; display:flex; align-items:center; gap:8px;">
-      <span>⚠️</span> Delete terminal?
+      Delete terminal?
     </div>
     <div id="delete-modal-term-name" class="delete-modal-term-name">"AGY"</div>
     <div class="modal-desc">This will stop the terminal process and permanently remove this session.</div>
@@ -1671,7 +1671,7 @@
     if (sessions.length === 0) {
       terminalsList.innerHTML = `
         <div class="empty-terminals">
-          <div style="font-size:36px; margin-bottom:10px;">💻</div>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px; color:var(--text-muted);"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           <div style="font-weight:700; font-size:16px; color:#fff; margin-bottom:6px;">No Active Terminals</div>
           <div style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">All terminal sessions have been removed.</div>
           <button id="btn-empty-new-term" class="btn btn-primary" style="padding:10px 20px; font-size:14px; font-weight:600;">+ Terminal</button>
@@ -2725,9 +2725,9 @@
         const ok = await copyTextToClipboard(selText);
         if (ok) {
           const prev = btnSelCopy.textContent;
-          btnSelCopy.textContent = '✓ Copied!';
+          btnSelCopy.textContent = 'Copied!';
           setTimeout(() => { btnSelCopy.textContent = prev; }, 1200);
-          if (selectionStatusText) selectionStatusText.textContent = `✓ Copied ${selText.length} chars!`;
+          if (selectionStatusText) selectionStatusText.textContent = `Copied ${selText.length} chars!`;
         } else {
           showClipboardFallbackModal(selText);
         }
@@ -3440,7 +3440,7 @@
           }, 1200);
         }
         if (selectionStatusText) {
-          selectionStatusText.textContent = `✓ Copied ${textToCopy.length} chars!`;
+          selectionStatusText.textContent = `Copied ${textToCopy.length} chars!`;
         }
       } else {
         logDebug('CLIP_FAIL', 'Clipboard permission unavailable; showing manual fallback');

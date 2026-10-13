@@ -25,9 +25,9 @@ function check(desc, fn) {
   try {
     fn();
     passed++;
-    console.log(`  ✓ ${desc}`);
+    console.log(`  [PASS] ${desc}`);
   } catch (err) {
-    console.error(`  ✗ ${desc}`);
+    console.error(`  [FAIL] ${desc}`);
     console.error(`    ${err.message}`);
   }
 }
@@ -37,9 +37,9 @@ async function checkAsync(desc, fn) {
   try {
     await fn();
     passed++;
-    console.log(`  ✓ ${desc}`);
+    console.log(`  [PASS] ${desc}`);
   } catch (err) {
-    console.error(`  ✗ ${desc}`);
+    console.error(`  [FAIL] ${desc}`);
     console.error(`    ${err.message}`);
   }
 }

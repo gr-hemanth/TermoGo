@@ -4,7 +4,8 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const htmlPath = path.resolve(__dirname, '..', 'web', 'index.html');
-const html = fs.readFileSync(htmlPath, 'utf8');
+const rawHtml = fs.readFileSync(htmlPath, 'utf8');
+const html = rawHtml.replace(/\r\n/g, '\n');
 
 console.log('============================================================');
 console.log('        TermoGo Mobile UI/UX Responsiveness Audit           ');

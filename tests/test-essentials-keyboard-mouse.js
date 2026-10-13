@@ -103,7 +103,7 @@ function sendAndAwaitOutput(ws, command, expectedMarker, timeoutMs = 8000) {
 
 async function runTestSuite() {
   const htmlPath = path.resolve(__dirname, '..', 'web', 'index.html');
-  const html = fs.readFileSync(htmlPath, 'utf8');
+  const html = fs.readFileSync(htmlPath, 'utf8').replace(/\r\n/g, '\n');
 
   // ============================================================
   // SECTION 1: ESSENTIALS TOOLBAR & POPOVER DOM AUDIT
